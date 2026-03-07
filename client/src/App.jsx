@@ -1,13 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { useAuth } from './context/useAuth.js'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import ShellLayout from './components/ShellLayout.jsx'
-import { useAuth } from './context/AuthContext.jsx'
 import Dashboard from './pages/Dashboard.jsx'
-import Login from './pages/Login.jsx'
-import NoteDetails from './pages/NoteDetails.jsx'
 import NoteEditor from './pages/NoteEditor.jsx'
+import NoteDetails from './pages/NoteDetails.jsx'
+import SharedNotes from './pages/SharedNotes.jsx'
 import NotFound from './pages/NotFound.jsx'
-import Register from './pages/Register.jsx'
 
 
 const PublicOnly = ({ children }) => {
