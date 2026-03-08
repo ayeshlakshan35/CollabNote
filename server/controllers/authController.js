@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const COMMON_TYPO_DOMAINS = new Set(['gmil.com', 'gmai.com', 'gmial.com', 'hotnail.com', 'yaho.com', 'outlok.com']);
+
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -10,7 +13,17 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: 'Please enter a valid email address' });
+    }
+
+    const domain = normalizedEmail.split('@')[1] || '';
+    if (COMMON_TYPO_DOMAINS.has(domain)) {
+      return res.status(400).json({ message: 'Email domain appears incorrect. Please check and try again' });
+    }
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(409).json({ message: 'Email already registered' });
     }
@@ -20,7 +33,7 @@ const register = async (req, res) => {
 
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
     });
 

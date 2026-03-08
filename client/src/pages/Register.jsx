@@ -3,23 +3,53 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth.js'
 import { toApiError } from '../services/api'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const COMMON_TYPO_DOMAINS = new Set(['gmil.com', 'gmai.com', 'gmial.com', 'hotnail.com', 'yaho.com', 'outlok.com'])
+
+const validateEmail = (value) => {
+  const email = String(value || '').trim().toLowerCase()
+  if (!EMAIL_REGEX.test(email)) {
+    return 'Please enter a valid email format (example: name@gmail.com).'
+  }
+
+  const domain = email.split('@')[1] || ''
+  if (COMMON_TYPO_DOMAINS.has(domain)) {
+    return `The email domain "${domain}" looks incorrect. Please check it.`
+  }
+
+  return ''
+}
+
 const Register = () => {
   const { register } = useAuth()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleChange = (event) => {
+    const { name, value } = event.target
+
+    if (name === 'email') {
+      setEmailError(validateEmail(value))
+    }
+
     setFormData((previous) => ({
       ...previous,
-      [event.target.name]: event.target.value,
+      [name]: value,
     }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+
+    const nextEmailError = validateEmail(formData.email)
+    setEmailError(nextEmailError)
+    if (nextEmailError) {
+      return
+    }
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters.')
@@ -65,6 +95,7 @@ const Register = () => {
               autoComplete="email"
               required
             />
+            {emailError ? <p className="mt-2 text-xs text-[#8a2f22]">{emailError}</p> : null}
           </div>
           <div>
             <label className="field-label" htmlFor="password">
