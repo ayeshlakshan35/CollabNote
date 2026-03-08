@@ -54,7 +54,14 @@ const NoteEditor = ({ mode }) => {
     }))
   }
 
-  const canManageMembers = mode === 'edit' && Boolean(id) && Boolean(user?.id) && ownerId === user.id
+  const isCollaborator = Array.isArray(collaborators)
+    && collaborators.some((member) => {
+      if (!member) return false
+      if (typeof member === 'object') return member._id === user?.id
+      return String(member) === String(user?.id)
+    })
+
+  const canManageMembers = mode === 'edit' && Boolean(id) && Boolean(user?.id) && (ownerId === user.id || isCollaborator)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
