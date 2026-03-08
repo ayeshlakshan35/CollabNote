@@ -54,29 +54,14 @@ const SharedNotes = () => {
 						<h2 className="mt-2 text-xl font-semibold text-[#2f2722]">{note.title || 'Untitled note'}</h2>
 						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">{note.content || 'No content provided.'}</p>
 
-						{Array.isArray(note.collaborators) && note.collaborators.length > 0 ? (
-							<div className="mt-4 rounded-xl border border-[#e7ddcf] bg-[#fffdfa] p-3">
-								<p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7a6e64]">Members</p>
-								<div className="mt-2 space-y-1">
-									{note.collaborators.map((member, index) => {
-										if (member && typeof member === 'object') {
-											return (
-												<p key={member._id || member.email || index} className="text-sm text-[#5f554b]">
-													{member.name || 'Member'}
-													{member.email ? ` (${member.email})` : ''}
-												</p>
-											)
-										}
-
-										return (
-											<p key={index} className="text-sm text-[#5f554b]">
-												Member ID: {String(member)}
-											</p>
-										)
-									})}
-								</div>
-							</div>
-						) : null}
+						<div className="mt-4 rounded-xl border border-[#e7ddcf] bg-[#fffdfa] p-3">
+							<p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7a6e64]">Owner</p>
+							<p className="mt-2 text-sm text-[#5f554b]">
+								{note.owner && typeof note.owner === 'object'
+									? `${note.owner.name || 'Owner'}${note.owner.email ? ` (${note.owner.email})` : ''}`
+									: 'Owner info not available'}
+							</p>
+						</div>
 						<div className="mt-4">
 							<Link className="agro-btn-secondary" to={`/notes/${note._id}`}>
 								View
