@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth.js'
 import { toApiError } from '../services/api'
 
 const Register = () => {
@@ -29,7 +29,7 @@ const Register = () => {
     try {
       setLoading(true)
       await register(formData)
-      navigate('/dashboard', { replace: true })
+      navigate('/login', { replace: true })
     } catch (apiError) {
       setError(toApiError(apiError, 'Unable to register.'))
     } finally {

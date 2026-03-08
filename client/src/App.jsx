@@ -1,9 +1,8 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/useAuth.js'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
-import ProtectedRoute from './components/ProtectedRoute.jsx'
-import ShellLayout from './components/ShellLayout.jsx'
+import Navbar from './components/Navbar.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import NoteEditor from './pages/NoteEditor.jsx'
 import NoteDetails from './pages/NoteDetails.jsx'
@@ -17,6 +16,21 @@ const PublicOnly = ({ children }) => {
     return <Navigate to="/dashboard" replace />
   }
   return children
+}
+
+const PrivateLayout = () => {
+  const { isAuthenticated } = useAuth()
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+    </>
+  )
 }
 
 function App() {
@@ -41,13 +55,7 @@ function App() {
             }
           />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <ShellLayout />
-              </ProtectedRoute>
-            }
-          >
+          <Route element={<PrivateLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/notes/new" element={<NoteEditor mode="create" />} />
             <Route path="/notes/:id" element={<NoteDetails />} />
