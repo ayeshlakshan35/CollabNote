@@ -29,7 +29,7 @@ const Register = () => {
     try {
       setLoading(true)
       await register(formData)
-      navigate('/dashboard', { replace: true })
+      navigate('/login', { replace: true })
     } catch (apiError) {
       setError(toApiError(apiError, 'Unable to register.'))
     } finally {
