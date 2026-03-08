@@ -2,13 +2,35 @@ import { createContext, useState } from 'react'
 import { loginUser, registerUser, setAuthToken } from '../services/api.js'
 
 const AuthContext = createContext(null)
+const STORAGE_KEY = 'agronotes_auth'
+
+const getInitialAuth = () => {
+  const persisted = sessionStorage.getItem(STORAGE_KEY)
+  if (!persisted) return { token: null, user: null }
+
+  try {
+    const parsed = JSON.parse(persisted)
+    return {
+      token: parsed?.token || null,
+      user: parsed?.user || null,
+    }
+  } catch {
+    sessionStorage.removeItem(STORAGE_KEY)
+    return { token: null, user: null }
+  }
+}
 
 export const AuthProvider = ({ children }) => {
-  const [auth, setAuth] = useState({ token: null, user: null })
+  const [auth, setAuth] = useState(() => {
+    const initialAuth = getInitialAuth()
+    setAuthToken(initialAuth.token)
+    return initialAuth
+  })
 
   const saveAuth = (nextAuth) => {
     setAuth(nextAuth)
     setAuthToken(nextAuth.token)
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextAuth))
   }
 
   const login = async (credentials) => {
@@ -25,6 +47,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setAuth({ token: null, user: null })
     setAuthToken(null)
+    sessionStorage.removeItem(STORAGE_KEY)
   }
 
   const value = {
