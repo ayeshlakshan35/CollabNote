@@ -22,7 +22,12 @@ const NoteEditor = ({ mode }) => {
   const [loading, setLoading] = useState(mode === 'edit')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [documentFile, setDocumentFile] = useState(null)
+  const [existingDocument, setExistingDocument] = useState({ url: '', name: '' })
   const editorRef = useRef(null)
+
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+  const fileBaseUrl = apiBase.replace(/\/api\/?$/, '')
 
   useEffect(() => {
     if (mode !== 'edit' || !id) return
@@ -34,6 +39,10 @@ const NoteEditor = ({ mode }) => {
           title: note.title,
           category: note.category,
           content: note.content,
+        })
+        setExistingDocument({
+          url: note.documentUrl || '',
+          name: note.documentName || '',
         })
         setCollaborators(Array.isArray(note.collaborators) ? note.collaborators : [])
         setOwnerId(typeof note.owner === 'object' ? note.owner?._id : note.owner || '')
@@ -48,6 +57,7 @@ const NoteEditor = ({ mode }) => {
   }, [id, mode])
 
   const title = useMemo(() => (mode === 'edit' ? 'Edit Note' : 'Create New Note'), [mode])
+  const isDocumentNote = formData.category === 'Documents'
 
   const handleChange = (event) => {
     setFormData((previous) => ({
@@ -86,6 +96,11 @@ const NoteEditor = ({ mode }) => {
     }))
   }
 
+  const handleDocumentChange = (event) => {
+    const selectedFile = event.target.files?.[0] || null
+    setDocumentFile(selectedFile)
+  }
+
   const isCollaborator = Array.isArray(collaborators)
     && collaborators.some((member) => {
       if (!member) return false
@@ -100,17 +115,46 @@ const NoteEditor = ({ mode }) => {
     setError('')
 
     const sanitizedContent = sanitizeRichTextHtml(formData.content)
+    const hasExistingDocument = Boolean(existingDocument.url)
 
-    if (!formData.title || !formData.category || isRichTextEmpty(sanitizedContent)) {
-      setError('All fields are required.')
+    if (!formData.title || !formData.category) {
+      setError('Title and category are required.')
+      return
+    }
+
+    if (isDocumentNote) {
+      if (documentFile && documentFile.type !== 'application/pdf') {
+        setError('Please upload a PDF file.')
+        return
+      }
+
+      if (!documentFile && !hasExistingDocument) {
+        setError('Please upload a PDF document.')
+        return
+      }
+    } else if (isRichTextEmpty(sanitizedContent)) {
+      setError('Note content is required.')
       return
     }
 
     try {
       setSaving(true)
-      const payload = {
-        ...formData,
-        content: sanitizedContent,
+      let payload
+
+      if (isDocumentNote) {
+        const formPayload = new FormData()
+        formPayload.append('title', formData.title)
+        formPayload.append('category', formData.category)
+        formPayload.append('content', '')
+        if (documentFile) {
+          formPayload.append('document', documentFile)
+        }
+        payload = formPayload
+      } else {
+        payload = {
+          ...formData,
+          content: sanitizedContent,
+        }
       }
 
       if (mode === 'edit') {
@@ -165,60 +209,91 @@ const NoteEditor = ({ mode }) => {
           </div>
 
           <div>
-            <label className="field-label" htmlFor="content">
-              Note Content
-            </label>
-            <div className="rich-editor-shell">
-              <div className="rich-editor-toolbar" role="toolbar" aria-label="Note formatting toolbar">
-                <button type="button" onClick={() => applyCommand('bold')} className="rich-editor-btn">Bold</button>
-                <button type="button" onClick={() => applyCommand('italic')} className="rich-editor-btn">Italic</button>
-                <button type="button" onClick={() => applyCommand('underline')} className="rich-editor-btn">Underline</button>
-                <button type="button" onClick={() => applyCommand('formatBlock', 'h2')} className="rich-editor-btn">Heading</button>
-                <button type="button" onClick={() => applyCommand('hiliteColor', '#fff09e')} className="rich-editor-btn">Highlight</button>
-                <button type="button" onClick={() => applyCommand('insertUnorderedList')} className="rich-editor-btn">Bullets</button>
-                <button type="button" onClick={() => applyCommand('insertOrderedList')} className="rich-editor-btn">Numbered</button>
-                <button type="button" onClick={() => applyCommand('removeFormat')} className="rich-editor-btn">Clear</button>
-
-                <label className="sr-only" htmlFor="font-family">Font family</label>
-                <select
-                  id="font-family"
-                  className="rich-editor-select"
-                  defaultValue="Georgia"
-                  onChange={(event) => applyCommand('fontName', event.target.value)}
-                >
-                  <option value="Georgia">Georgia</option>
-                  <option value="Times New Roman">Times New Roman</option>
-                  <option value="Arial">Arial</option>
-                  <option value="Verdana">Verdana</option>
-                  <option value="Courier New">Courier New</option>
-                </select>
-
-                <label className="sr-only" htmlFor="font-size">Font size</label>
-                <select
-                  id="font-size"
-                  className="rich-editor-select"
-                  defaultValue="3"
-                  onChange={(event) => applyCommand('fontSize', event.target.value)}
-                >
-                  <option value="2">Small</option>
-                  <option value="3">Normal</option>
-                  <option value="4">Large</option>
-                  <option value="5">XL</option>
-                </select>
+            {isDocumentNote ? (
+              <div>
+                <label className="field-label" htmlFor="document-file">
+                  Upload Document (PDF)
+                </label>
+                <input
+                  id="document-file"
+                  className="agro-input"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={handleDocumentChange}
+                />
+                {existingDocument.url ? (
+                  <p className="mt-2 text-sm text-[#5f554b]">
+                    Current file:{' '}
+                    <a
+                      href={`${fileBaseUrl}${existingDocument.url}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-[#365d3d]"
+                    >
+                      {existingDocument.name || 'Open PDF'}
+                    </a>
+                  </p>
+                ) : null}
+                {documentFile ? <p className="mt-2 text-sm text-[#5f554b]">Selected: {documentFile.name}</p> : null}
               </div>
+            ) : (
+              <>
+                <label className="field-label" htmlFor="content">
+                  Note Content
+                </label>
+                <div className="rich-editor-shell">
+                  <div className="rich-editor-toolbar" role="toolbar" aria-label="Note formatting toolbar">
+                    <button type="button" onClick={() => applyCommand('bold')} className="rich-editor-btn">Bold</button>
+                    <button type="button" onClick={() => applyCommand('italic')} className="rich-editor-btn">Italic</button>
+                    <button type="button" onClick={() => applyCommand('underline')} className="rich-editor-btn">Underline</button>
+                    <button type="button" onClick={() => applyCommand('formatBlock', 'h2')} className="rich-editor-btn">Heading</button>
+                    <button type="button" onClick={() => applyCommand('hiliteColor', '#fff09e')} className="rich-editor-btn">Highlight</button>
+                    <button type="button" onClick={() => applyCommand('insertUnorderedList')} className="rich-editor-btn">Bullets</button>
+                    <button type="button" onClick={() => applyCommand('insertOrderedList')} className="rich-editor-btn">Numbered</button>
+                    <button type="button" onClick={() => applyCommand('removeFormat')} className="rich-editor-btn">Clear</button>
 
-              <div
-                id="content"
-                ref={editorRef}
-                className="rich-editor-content"
-                contentEditable
-                role="textbox"
-                aria-multiline="true"
-                data-placeholder="Write field observations, issues, harvest data, or action items..."
-                onInput={handleEditorInput}
-                suppressContentEditableWarning
-              />
-            </div>
+                    <label className="sr-only" htmlFor="font-family">Font family</label>
+                    <select
+                      id="font-family"
+                      className="rich-editor-select"
+                      defaultValue="Georgia"
+                      onChange={(event) => applyCommand('fontName', event.target.value)}
+                    >
+                      <option value="Georgia">Georgia</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Arial">Arial</option>
+                      <option value="Verdana">Verdana</option>
+                      <option value="Courier New">Courier New</option>
+                    </select>
+
+                    <label className="sr-only" htmlFor="font-size">Font size</label>
+                    <select
+                      id="font-size"
+                      className="rich-editor-select"
+                      defaultValue="3"
+                      onChange={(event) => applyCommand('fontSize', event.target.value)}
+                    >
+                      <option value="2">Small</option>
+                      <option value="3">Normal</option>
+                      <option value="4">Large</option>
+                      <option value="5">XL</option>
+                    </select>
+                  </div>
+
+                  <div
+                    id="content"
+                    ref={editorRef}
+                    className="rich-editor-content"
+                    contentEditable
+                    role="textbox"
+                    aria-multiline="true"
+                    data-placeholder="Write field observations, issues, harvest data, or action items..."
+                    onInput={handleEditorInput}
+                    suppressContentEditableWarning
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {error ? <p className="rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}

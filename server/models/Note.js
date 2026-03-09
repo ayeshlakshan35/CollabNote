@@ -14,7 +14,22 @@ const noteSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: '',
+      trim: true,
+    },
+    documentUrl: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    documentName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    documentMimeType: {
+      type: String,
+      default: '',
       trim: true,
     },
     owner: {

@@ -125,7 +125,11 @@ const Dashboard = () => {
 					<article key={note._id} className="card-surface p-5">
 						<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a6e64]">{note.category || 'General'}</p>
 						<h2 className="mt-2 text-xl font-semibold text-[#2f2722]">{note.title || 'Untitled note'}</h2>
-						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">{richTextPreview(note.content || '', 180) || 'No content provided.'}</p>
+						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">
+							{note.category === 'Documents'
+								? note.documentName || 'PDF document attached.'
+								: richTextPreview(note.content || '', 180) || 'No content provided.'}
+						</p>
 
 						<div className="mt-4 flex flex-wrap gap-2">
 							<Link className="agro-btn-secondary" to={`/notes/${note._id}`}>
