@@ -26,10 +26,10 @@ const PrivateLayout = () => {
   }
 
   return (
-    <>
+    <div className="flex min-h-screen bg-[#f3f4f6]">
       <Navbar />
       <Outlet />
-    </>
+    </div>
   )
 }
 

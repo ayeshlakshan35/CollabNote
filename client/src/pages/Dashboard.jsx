@@ -1,152 +1,160 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { deleteNote, getNotes, getNotesStats, searchNotes, toApiError } from '../services/api.js'
 import { richTextPreview } from '../utils/richText.js'
 import { NOTE_CATEGORIES } from '../utils/categories.js'
 
 const Dashboard = () => {
-	const [notes, setNotes] = useState([])
-	const [stats, setStats] = useState({ totalNotes: 0, topCategory: null, topCategoryCount: 0 })
-	const [selectedCategory, setSelectedCategory] = useState('')
-	const [loading, setLoading] = useState(true)
-	const [error, setError] = useState('')
+  const [searchParams] = useSearchParams()
+  const [notes, setNotes] = useState([])
+  const [stats, setStats] = useState({ totalNotes: 0, topCategory: null, topCategoryCount: 0 })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const selectedCategory = searchParams.get('category') || ''
 
-	useEffect(() => {
-		const loadStats = async () => {
-			try {
-				const statsData = await getNotesStats()
-				setStats({
-					totalNotes: Number(statsData?.totalNotes || 0),
-					topCategory: statsData?.topCategory || null,
-					topCategoryCount: Number(statsData?.topCategoryCount || 0),
-				})
-			} catch (apiError) {
-				setError(toApiError(apiError, 'Unable to load dashboard stats.'))
-			}
-		}
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const statsData = await getNotesStats()
+        setStats({
+          totalNotes: Number(statsData?.totalNotes || 0),
+          topCategory: statsData?.topCategory || null,
+          topCategoryCount: Number(statsData?.topCategoryCount || 0),
+        })
+      } catch (apiError) {
+        setError(toApiError(apiError, 'Unable to load dashboard stats.'))
+      }
+    }
 
-		loadStats()
-	}, [])
+    loadStats()
+  }, [])
 
-	useEffect(() => {
-		const loadNotes = async () => {
-			setLoading(true)
-			setError('')
+  useEffect(() => {
+    const loadNotes = async () => {
+      setLoading(true)
+      setError('')
 
-			try {
-				if (selectedCategory) {
-					const filtered = await searchNotes({ category: selectedCategory })
-					setNotes(Array.isArray(filtered) ? filtered : [])
-					return
-				}
+      try {
+        if (selectedCategory) {
+          const filtered = await searchNotes({ category: selectedCategory })
+          setNotes(Array.isArray(filtered) ? filtered : [])
+        } else {
+          const allNotes = await getNotes()
+          setNotes(Array.isArray(allNotes) ? allNotes : [])
+        }
+      } catch (apiError) {
+        setError(toApiError(apiError, 'Unable to load notes.'))
+      } finally {
+        setLoading(false)
+      }
+    }
 
-				const allNotes = await getNotes()
-				setNotes(Array.isArray(allNotes) ? allNotes : [])
-			} catch (apiError) {
-				setError(toApiError(apiError, 'Unable to load notes.'))
-			} finally {
-				setLoading(false)
-			}
-		}
+    loadNotes()
+  }, [selectedCategory])
 
-		loadNotes()
-	}, [selectedCategory])
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this note?')) return
 
-	const handleDelete = async (id) => {
-		if (!window.confirm('Delete this note?')) return
+    try {
+      await deleteNote(id)
+      const nextNotes = notes.filter((note) => note._id !== id)
+      setNotes(nextNotes)
 
-		try {
-			await deleteNote(id)
-			const nextNotes = notes.filter((note) => note._id !== id)
-			setNotes(nextNotes)
+      const nextStats = await getNotesStats()
+      setStats({
+        totalNotes: Number(nextStats?.totalNotes || 0),
+        topCategory: nextStats?.topCategory || null,
+        topCategoryCount: Number(nextStats?.topCategoryCount || 0),
+      })
+    } catch (apiError) {
+      setError(toApiError(apiError, 'Unable to delete note.'))
+    }
+  }
 
-			const nextStats = await getNotesStats()
-			setStats({
-				totalNotes: Number(nextStats?.totalNotes || 0),
-				topCategory: nextStats?.topCategory || null,
-				topCategoryCount: Number(nextStats?.topCategoryCount || 0),
-			})
-		} catch (apiError) {
-			setError(toApiError(apiError, 'Unable to delete note.'))
-		}
-	}
+  return (
+    <section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+      <div className="space-y-6">
+        <div className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
+          <h1 className="text-4xl font-bold tracking-tight text-[#1f2937]">Dashboard</h1>
+          <p className="mt-2 text-[#6b7280]">Start writing, sharing, and managing notes with ease.</p>
 
-	return (
-		<section className="space-y-6">
-			<div className="card-surface flex flex-wrap items-center justify-between gap-3 p-5 sm:p-6">
-				<div>
-					<h1 className="font-display text-3xl text-[#2f2722]">Dashboard</h1>
-					<p className="mt-1 text-sm text-[#5f554b]">Manage field notes and coordinate with your collaborators.</p>
-					<p className="mt-2 text-sm text-[#5f554b]">
-						Total notes: <span className="font-semibold text-[#2f2722]">{stats.totalNotes}</span> | Top category:{' '}
-						<span className="font-semibold text-[#2f2722]">{stats.topCategory || 'None yet'}</span>
-					</p>
-				</div>
-				<Link className="agro-btn-primary" to="/notes/new">
-					Create Note
-				</Link>
-			</div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-[#edf0f2] bg-[#f7fbf8] p-4">
+              <p className="text-sm text-[#6b7280]">Total Notes</p>
+              <p className="mt-1 text-2xl font-bold text-[#1f2937]">{stats.totalNotes}</p>
+            </div>
+            <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+              <p className="text-sm text-[#6b7280]">Filtered Notes</p>
+              <p className="mt-1 text-2xl font-bold text-[#1f2937]">{notes.length}</p>
+            </div>
+            <div className="rounded-2xl border border-[#edf0f2] bg-[#fffaf2] p-4">
+              <p className="text-sm text-[#6b7280]">Documents</p>
+              <p className="mt-1 text-2xl font-bold text-[#1f2937]">{notes.filter((note) => note.category === 'Documents').length}</p>
+            </div>
+            <div className="rounded-2xl border border-[#edf0f2] bg-white p-4">
+              <p className="text-sm text-[#6b7280]">Top Category</p>
+              <p className="mt-1 line-clamp-1 text-2xl font-bold text-[#1f2937]">{stats.topCategory || 'None'}</p>
+            </div>
+          </div>
+        </div>
 
-			<div className="card-surface flex flex-wrap items-center gap-3 p-4 sm:p-5">
-				<label className="field-label m-0" htmlFor="dashboard-category-filter">
-					Filter by category
-				</label>
-				<select
-					id="dashboard-category-filter"
-					className="agro-input max-w-xs"
-					value={selectedCategory}
-					onChange={(event) => setSelectedCategory(event.target.value)}
-				>
-					<option value="">All categories</option>
-					{NOTE_CATEGORIES.map((category) => (
-						<option key={category} value={category}>
-							{category}
-						</option>
-					))}
-				</select>
-			</div>
+        {error ? <p className="rounded-2xl border border-[#f3c7bf] bg-[#fce9e5] px-4 py-3 text-sm text-[#8a2f22]">{error}</p> : null}
+        {loading ? <p className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-[#6b7280]">Loading notes...</p> : null}
 
-			{error ? <p className="rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}
+        {!loading && notes.length === 0 ? (
+          <div className="rounded-3xl border border-[#e5e7eb] bg-white p-10 text-center">
+            <h3 className="text-2xl font-bold text-[#1f2937]">No notes found</h3>
+            <p className="mt-2 text-[#6b7280]">
+              {selectedCategory
+                ? `No notes found in ${selectedCategory}.`
+                : 'No notes yet. Create your first note to get started.'}
+            </p>
+          </div>
+        ) : null}
 
-			{loading ? <p className="text-sm text-[#5f554b]">Loading notes...</p> : null}
+        <div className="grid gap-5 md:grid-cols-2">
+          {notes.map((note) => (
+            <article key={note._id} className="rounded-[28px] border border-[#edf0f2] bg-white p-6 shadow-sm">
+              <span className="inline-flex rounded-full bg-[#eef7f1] px-4 py-2 text-sm font-semibold text-[#2f7d4f]">
+                {note.category || 'General'}
+              </span>
 
-			{!loading && notes.length === 0 ? (
-				<div className="card-surface p-8 text-center">
-					<p className="text-[#5f554b]">
-						{selectedCategory
-							? `No notes found in ${selectedCategory}.`
-							: 'No notes yet. Create your first note to get started.'}
-					</p>
-				</div>
-			) : null}
+              <h3 className="mt-4 text-3xl font-bold text-[#1f2937]">{note.title || 'Untitled note'}</h3>
 
-			<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				{notes.map((note) => (
-					<article key={note._id} className="card-surface p-5">
-						<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a6e64]">{note.category || 'General'}</p>
-						<h2 className="mt-2 text-xl font-semibold text-[#2f2722]">{note.title || 'Untitled note'}</h2>
-						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">
-							{note.category === 'Documents'
-								? note.documentName || 'PDF document attached.'
-								: richTextPreview(note.content || '', 180) || 'No content provided.'}
-						</p>
+              <p className="mt-3 line-clamp-3 text-lg leading-8 text-[#6b7280]">
+                {note.category === 'Documents'
+                  ? note.documentName || 'PDF document attached.'
+                  : richTextPreview(note.content || '', 150) || 'No content provided.'}
+              </p>
 
-						<div className="mt-4 flex flex-wrap gap-2">
-							<Link className="agro-btn-secondary" to={`/notes/${note._id}`}>
-								View
-							</Link>
-							<Link className="agro-btn-secondary" to={`/notes/${note._id}/edit`}>
-								Edit
-							</Link>
-							<button className="agro-btn-secondary" type="button" onClick={() => handleDelete(note._id)}>
-								Delete
-							</button>
-						</div>
-					</article>
-				))}
-			</div>
-		</section>
-	)
+              <div className="mt-6 flex flex-wrap gap-2">
+                <Link
+                  className="rounded-xl border border-[#d1d5db] px-4 py-2 text-sm font-medium text-[#374151] transition hover:border-[#2f7d4f] hover:text-[#2f7d4f]"
+                  to={`/notes/${note._id}`}
+                >
+                  View
+                </Link>
+                <Link
+                  className="rounded-xl border border-[#d1d5db] px-4 py-2 text-sm font-medium text-[#374151] transition hover:border-[#2f7d4f] hover:text-[#2f7d4f]"
+                  to={`/notes/${note._id}/edit`}
+                >
+                  Edit
+                </Link>
+                <button
+                  className="rounded-xl border border-[#f2c8c2] px-4 py-2 text-sm font-medium text-[#a63d2f] transition hover:bg-[#fff3f1]"
+                  type="button"
+                  onClick={() => handleDelete(note._id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 export default Dashboard
