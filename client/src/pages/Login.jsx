@@ -42,29 +42,32 @@ const Login = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f7f5f1]">
-      <div className="grid h-full lg:grid-cols-2">
-        <div className="hidden h-full overflow-hidden lg:block">
+    <div className="h-screen overflow-hidden bg-[#f3f4f6]">
+      <div className="flex h-full overflow-hidden bg-white">
+        <div className="hidden w-1/2 items-end justify-center bg-[#f8faf8] p-8 lg:flex">
           <img
             src={loginImage}
             alt="AgroNotes login illustration"
-            className="h-full w-full object-cover"
+            className="h-auto max-h-[85%] w-full object-contain"
           />
         </div>
 
-        <div className="flex items-center justify-center px-4 py-6 sm:px-6 lg:px-12">
-          <div className="w-full max-w-md">
-            <div className="rounded-[28px] border border-[#e7e0d7] bg-[#f7f5f1] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:p-10">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7a6e64]">
-                CollabNote
-              </p>
+        <div className="flex w-full items-center justify-center overflow-y-auto px-6 py-6 sm:px-10 lg:w-1/2 lg:px-14">
+          <div className="w-full max-w-120">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7a6e64]">
+              CollabNote
+            </p>
 
-              <h1 className="mt-3 text-4xl font-bold leading-tight text-[#caa893] text-center">
-                SignIn
-              </h1>
+            <h1 className="mt-4 text-4xl font-bold leading-tight text-center text-[#238f32] sm:text-5xl">
+              Login
+            
+            </h1>
 
+            <p className="mt-5 text-lg leading-8 text-[#5f554b]">
+              Start writing, sharing, and managing notes with ease.
+            </p>
 
-              <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+            <form className="mt-10 space-y-4" onSubmit={handleSubmit}>
                 <div>
                   <label
                     className="mb-2 block text-sm font-semibold text-[#2f2722]"
@@ -74,7 +77,7 @@ const Login = () => {
                   </label>
                   <input
                     id="email"
-                    className="w-full rounded-2xl border border-[#d9d1c7] bg-white px-4 py-3 text-sm text-[#2f2722] outline-none transition placeholder:text-[#9b938b] focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
+                    className="w-full rounded-2xl border border-[#dedede] bg-white px-5 py-4 text-base text-[#2f2722] outline-none transition placeholder:text-[#9b938b] focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
                     type="email"
                     name="email"
                     value={formData.email}
@@ -94,7 +97,7 @@ const Login = () => {
                   </label>
                   <input
                     id="password"
-                    className="w-full rounded-2xl border border-[#d9d1c7] bg-white px-4 py-3 text-sm text-[#2f2722] outline-none transition placeholder:text-[#9b938b] focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
+                    className="w-full rounded-2xl border border-[#dedede] bg-white px-5 py-4 text-base text-[#2f2722] outline-none transition placeholder:text-[#9b938b] focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
                     type="password"
                     name="password"
                     value={formData.password}
@@ -112,21 +115,20 @@ const Login = () => {
                 ) : null}
 
                 <button
-                  className="w-full rounded-2xl bg-[#1f6b3b] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#17562f] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="mt-2 w-full rounded-2xl bg-[#2f7d4f] px-5 py-4 text-lg font-semibold text-white transition hover:bg-[#276943] disabled:cursor-not-allowed disabled:opacity-70"
                   type="submit"
                   disabled={loading}
                 >
-                  {loading ? 'Signing in...' : 'Sign in'}
+                  {loading ? 'Login in...' : 'Login'}
                 </button>
               </form>
 
-              <p className="mt-6 text-sm text-[#5f554b] text-center">
-                No account yet?{' '}
-                <Link className="font-semibold text-[#365d3d] hover:underline" to="/register">
-                  Create one
-                </Link>
-              </p>
-            </div>
+            <p className="text-center mt-8 text-base text-[#5f554b]">
+              No account yet?{' '}
+              <Link className="font-semibold text-[#2f7d4f] hover:underline" to="/register">
+                Create one
+              </Link>
+            </p>
           </div>
         </div>
       </div>
