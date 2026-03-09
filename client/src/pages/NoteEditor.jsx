@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { createNote, getNote, toApiError, updateNote } from '../services/api'
+import { createNote, getNote, toApiError, updateNote, uploadNoteImage } from '../services/api'
 import NoteCollaboratorsPanel from '../components/NoteCollaboratorsPanel.jsx'
 import { useAuth } from '../context/useAuth.js'
 import { NOTE_CATEGORIES } from '../utils/categories.js'
@@ -10,6 +10,44 @@ const initialForm = {
   title: '',
   category: NOTE_CATEGORIES[0],
   content: '',
+}
+
+const escapeHtmlAttribute = (value = '') =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+const insertHtmlAtCursor = (editorElement, html) => {
+  if (!editorElement) return false
+
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0) {
+    editorElement.insertAdjacentHTML('beforeend', html)
+    return true
+  }
+
+  const range = selection.getRangeAt(0)
+  if (!editorElement.contains(range.commonAncestorContainer)) {
+    editorElement.insertAdjacentHTML('beforeend', html)
+    return true
+  }
+
+  range.deleteContents()
+
+  const fragment = range.createContextualFragment(html)
+  const lastNode = fragment.lastChild
+  range.insertNode(fragment)
+
+  if (lastNode) {
+    range.setStartAfter(lastNode)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+
+  return true
 }
 
 const NoteEditor = ({ mode }) => {
@@ -24,7 +62,9 @@ const NoteEditor = ({ mode }) => {
   const [error, setError] = useState('')
   const [documentFile, setDocumentFile] = useState(null)
   const [existingDocument, setExistingDocument] = useState({ url: '', name: '' })
+  const [uploadingImage, setUploadingImage] = useState(false)
   const editorRef = useRef(null)
+  const imageInputRef = useRef(null)
 
   const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
   const fileBaseUrl = apiBase.replace(/\/api\/?$/, '')
@@ -101,6 +141,56 @@ const NoteEditor = ({ mode }) => {
     setDocumentFile(selectedFile)
   }
 
+  const handleInsertImageClick = () => {
+    imageInputRef.current?.click()
+  }
+
+  const handleInsertImage = async (event) => {
+    const imageFile = event.target.files?.[0] || null
+    event.target.value = ''
+
+    if (!imageFile) return
+
+    if (!imageFile.type.startsWith('image/')) {
+      setError('Please select a valid image file.')
+      return
+    }
+
+    try {
+      setError('')
+      setUploadingImage(true)
+      const uploaded = await uploadNoteImage(imageFile)
+      const imageUrl = uploaded?.url ? `${fileBaseUrl}${uploaded.url}` : ''
+
+      if (!imageUrl || !editorRef.current) {
+        setError('Unable to insert image.')
+        return
+      }
+
+      editorRef.current.focus()
+      const safeUrl = escapeHtmlAttribute(imageUrl)
+      const safeAlt = escapeHtmlAttribute(imageFile.name || 'Inserted image')
+      const inserted = insertHtmlAtCursor(
+        editorRef.current,
+        `<p><img src="${safeUrl}" alt="${safeAlt}" /></p>`
+      )
+
+      if (!inserted) {
+        setError('Unable to insert image.')
+        return
+      }
+
+      setFormData((previous) => ({
+        ...previous,
+        content: editorRef.current.innerHTML,
+      }))
+    } catch (apiError) {
+      setError(toApiError(apiError, 'Unable to upload image.'))
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const isCollaborator = Array.isArray(collaborators)
     && collaborators.some((member) => {
       if (!member) return false
@@ -172,34 +262,52 @@ const NoteEditor = ({ mode }) => {
   }
 
   if (loading) {
-    return <p className="text-sm text-[#5f554b]">Loading note editor...</p>
+    return (
+      <section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+        <p className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-[#6b7280]">Loading note editor...</p>
+      </section>
+    )
   }
 
   return (
-    <div className={mode === 'edit' ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}>
-      <section className="card-surface p-6 sm:p-8">
-        <h2 className="font-display text-3xl text-[#2f2722]">{title}</h2>
-        <p className="mt-2 text-sm text-[#5f554b]">Use detailed notes to improve continuity between field teams and operations.</p>
+    <section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+      <div className={mode === 'edit' ? 'grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]' : ''}>
+      <section className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)] sm:p-8">
+        <h2 className="text-4xl font-bold tracking-tight text-[#1f2937]">{title}</h2>
+        <p className="mt-2 text-[#6b7280]">Use detailed notes to improve continuity between field teams and operations.</p>
 
-        <div className="mt-4 rounded-2xl border border-[#dbcdb9] bg-[#fffaf3] px-4 py-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6e64]">Author Profile</p>
-          <p className="mt-1 text-base font-semibold text-[#2f2722]">{user?.name || 'Unknown user'}</p>
-          <p className="text-sm text-[#5f554b]">{user?.email || 'No email available'}</p>
+        <div className="mt-5 rounded-2xl border border-[#e7ecf0] bg-[#f9fafb] px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6b7280]">Author Profile</p>
+          <p className="mt-1 text-base font-semibold text-[#1f2937]">{user?.name || 'Unknown user'}</p>
+          <p className="text-sm text-[#6b7280]">{user?.email || 'No email available'}</p>
         </div>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="field-label" htmlFor="title">
+            <label className="mb-2 block text-sm font-semibold text-[#2f2722]" htmlFor="title">
               Title
             </label>
-            <input id="title" className="agro-input" name="title" value={formData.title} onChange={handleChange} required />
+            <input
+              id="title"
+              className="w-full rounded-2xl border border-[#dedede] bg-white px-5 py-4 text-base text-[#2f2722] outline-none transition placeholder:text-[#9b938b] focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div>
-            <label className="field-label" htmlFor="category">
+            <label className="mb-2 block text-sm font-semibold text-[#2f2722]" htmlFor="category">
               Category
             </label>
-            <select id="category" className="agro-input" name="category" value={formData.category} onChange={handleChange}>
+            <select
+              id="category"
+              className="w-full rounded-2xl border border-[#dedede] bg-white px-5 py-4 text-base text-[#2f2722] outline-none transition focus:border-[#2f7d32] focus:ring-4 focus:ring-[#2f7d32]/10"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+            >
               {NOTE_CATEGORIES.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -211,34 +319,34 @@ const NoteEditor = ({ mode }) => {
           <div>
             {isDocumentNote ? (
               <div>
-                <label className="field-label" htmlFor="document-file">
+                <label className="mb-2 block text-sm font-semibold text-[#2f2722]" htmlFor="document-file">
                   Upload Document (PDF)
                 </label>
                 <input
                   id="document-file"
-                  className="agro-input"
+                  className="w-full rounded-2xl border border-[#dedede] bg-white px-5 py-4 text-base text-[#2f2722] outline-none transition file:mr-4 file:rounded-xl file:border-0 file:bg-[#eef7f1] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#2f7d4f]"
                   type="file"
                   accept="application/pdf,.pdf"
                   onChange={handleDocumentChange}
                 />
                 {existingDocument.url ? (
-                  <p className="mt-2 text-sm text-[#5f554b]">
+                  <p className="mt-2 text-sm text-[#6b7280]">
                     Current file:{' '}
                     <a
                       href={`${fileBaseUrl}${existingDocument.url}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-semibold text-[#365d3d]"
+                      className="font-semibold text-[#2f7d4f] hover:underline"
                     >
                       {existingDocument.name || 'Open PDF'}
                     </a>
                   </p>
                 ) : null}
-                {documentFile ? <p className="mt-2 text-sm text-[#5f554b]">Selected: {documentFile.name}</p> : null}
+                {documentFile ? <p className="mt-2 text-sm text-[#6b7280]">Selected: {documentFile.name}</p> : null}
               </div>
             ) : (
               <>
-                <label className="field-label" htmlFor="content">
+                <label className="mb-2 block text-sm font-semibold text-[#2f2722]" htmlFor="content">
                   Note Content
                 </label>
                 <div className="rich-editor-shell">
@@ -250,6 +358,9 @@ const NoteEditor = ({ mode }) => {
                     <button type="button" onClick={() => applyCommand('hiliteColor', '#fff09e')} className="rich-editor-btn">Highlight</button>
                     <button type="button" onClick={() => applyCommand('insertUnorderedList')} className="rich-editor-btn">Bullets</button>
                     <button type="button" onClick={() => applyCommand('insertOrderedList')} className="rich-editor-btn">Numbered</button>
+                    <button type="button" onClick={handleInsertImageClick} className="rich-editor-btn" disabled={uploadingImage}>
+                      {uploadingImage ? 'Uploading...' : 'Image'}
+                    </button>
                     <button type="button" onClick={() => applyCommand('removeFormat')} className="rich-editor-btn">Clear</button>
 
                     <label className="sr-only" htmlFor="font-family">Font family</label>
@@ -291,18 +402,33 @@ const NoteEditor = ({ mode }) => {
                     onInput={handleEditorInput}
                     suppressContentEditableWarning
                   />
+
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleInsertImage}
+                  />
                 </div>
               </>
             )}
           </div>
 
-          {error ? <p className="rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}
+          {error ? <p className="rounded-2xl border border-[#f3c7bf] bg-[#fce9e5] px-4 py-3 text-sm text-[#8a2f22]">{error}</p> : null}
 
           <div className="flex flex-wrap gap-3">
-            <button className="agro-btn-primary" type="submit" disabled={saving}>
+            <button
+              className="rounded-xl bg-[#2f7d4f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#276943] disabled:cursor-not-allowed disabled:opacity-70"
+              type="submit"
+              disabled={saving}
+            >
               {saving ? 'Saving...' : mode === 'edit' ? 'Update Note' : 'Create Note'}
             </button>
-            <Link to={mode === 'edit' ? `/notes/${id}` : '/dashboard'} className="agro-btn-secondary">
+            <Link
+              to={mode === 'edit' ? `/notes/${id}` : '/dashboard'}
+              className="rounded-xl border border-[#d1d5db] px-5 py-3 text-sm font-semibold text-[#374151] transition hover:border-[#2f7d4f] hover:text-[#2f7d4f]"
+            >
               Cancel
             </Link>
           </div>
@@ -318,6 +444,7 @@ const NoteEditor = ({ mode }) => {
         />
       ) : null}
     </div>
+    </section>
   )
 }
 

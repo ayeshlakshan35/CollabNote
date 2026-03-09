@@ -75,7 +75,7 @@ const Dashboard = () => {
   return (
     <section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
       <div className="space-y-6">
-        <div className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
+        <div className="rounded-3xl border border-[#e5e7eb] bg-green-100 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
           <h1 className="text-4xl font-bold tracking-tight text-[#1f2937]">Dashboard</h1>
           <p className="mt-2 text-[#6b7280]">Start writing, sharing, and managing notes with ease.</p>
 
