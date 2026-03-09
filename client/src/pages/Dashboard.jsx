@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { deleteNote, getNotes, toApiError } from '../services/api.js'
+import { deleteNote, getNotes, getNotesStats, toApiError } from '../services/api.js'
 
 const Dashboard = () => {
 	const [notes, setNotes] = useState([])
+	const [stats, setStats] = useState({ totalNotes: 0, topCategory: null, topCategoryCount: 0 })
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 
 	useEffect(() => {
-		const loadNotes = async () => {
+		const loadDashboardData = async () => {
 			try {
-				const data = await getNotes()
-				setNotes(Array.isArray(data) ? data : [])
+				const [notesData, statsData] = await Promise.all([getNotes(), getNotesStats()])
+				setNotes(Array.isArray(notesData) ? notesData : [])
+				setStats({
+					totalNotes: Number(statsData?.totalNotes || 0),
+					topCategory: statsData?.topCategory || null,
+					topCategoryCount: Number(statsData?.topCategoryCount || 0),
+				})
 			} catch (apiError) {
 				setError(toApiError(apiError, 'Unable to load notes.'))
 			} finally {
@@ -19,7 +25,7 @@ const Dashboard = () => {
 			}
 		}
 
-		loadNotes()
+		loadDashboardData()
 	}, [])
 
 	const handleDelete = async (id) => {
@@ -27,7 +33,15 @@ const Dashboard = () => {
 
 		try {
 			await deleteNote(id)
-			setNotes((previous) => previous.filter((note) => note._id !== id))
+			const nextNotes = notes.filter((note) => note._id !== id)
+			setNotes(nextNotes)
+
+			const nextStats = await getNotesStats()
+			setStats({
+				totalNotes: Number(nextStats?.totalNotes || 0),
+				topCategory: nextStats?.topCategory || null,
+				topCategoryCount: Number(nextStats?.topCategoryCount || 0),
+			})
 		} catch (apiError) {
 			setError(toApiError(apiError, 'Unable to delete note.'))
 		}
@@ -39,6 +53,10 @@ const Dashboard = () => {
 				<div>
 					<h1 className="font-display text-3xl text-[#2f2722]">Dashboard</h1>
 					<p className="mt-1 text-sm text-[#5f554b]">Manage field notes and coordinate with your collaborators.</p>
+					<p className="mt-2 text-sm text-[#5f554b]">
+						Total notes: <span className="font-semibold text-[#2f2722]">{stats.totalNotes}</span> | Top category:{' '}
+						<span className="font-semibold text-[#2f2722]">{stats.topCategory || 'None yet'}</span>
+					</p>
 				</div>
 				<Link className="agro-btn-primary" to="/notes/new">
 					Create Note

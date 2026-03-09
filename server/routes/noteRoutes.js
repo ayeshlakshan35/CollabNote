@@ -5,6 +5,7 @@ import {
   deleteNote,
   getNote,
   getNotes,
+  getNotesStats,
   removeCollaborator,
   searchNotes,
   updateNote,
@@ -17,6 +18,7 @@ router.use(protect);
 
 router.get('/', getNotes);
 router.get('/search', searchNotes);
+router.get('/stats', getNotesStats);
 router.get('/:id', getNote);
 router.post('/', createNote);
 router.put('/:id', updateNote);

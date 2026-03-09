@@ -30,6 +30,11 @@ export const getNotes = async () => {
   return data
 }
 
+export const getNotesStats = async () => {
+  const { data } = await api.get('/notes/stats')
+  return data
+}
+
 export const getNote = async (id) => {
   const { data } = await api.get(`/notes/${id}`)
   return data

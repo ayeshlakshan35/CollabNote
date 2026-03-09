@@ -1,5 +1,6 @@
 import Note from '../models/Note.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -49,6 +50,47 @@ const searchNotes = async (req, res) => {
     return res.json(notes);
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Unable to search notes' });
+  }
+};
+
+const getNotesStats = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    const categories = await Note.aggregate([
+      {
+        $match: {
+          $or: [{ owner: userId }, { collaborators: userId }],
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          count: -1,
+          _id: 1,
+        },
+      },
+    ]);
+
+    const totalNotes = categories.reduce((sum, item) => sum + item.count, 0);
+    const topCategory = categories[0] || null;
+
+    return res.json({
+      totalNotes,
+      topCategory: topCategory ? topCategory._id : null,
+      topCategoryCount: topCategory ? topCategory.count : 0,
+      categories: categories.map((item) => ({
+        category: item._id,
+        count: item.count,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Unable to fetch note stats' });
   }
 };
 
@@ -206,6 +248,7 @@ export {
   deleteNote,
   getNote,
   getNotes,
+  getNotesStats,
   removeCollaborator,
   searchNotes,
   updateNote,
