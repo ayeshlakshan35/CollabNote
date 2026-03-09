@@ -3,15 +3,6 @@ import { Link } from 'react-router-dom'
 import { getNotes, toApiError } from '../services/api.js'
 import { richTextPreview } from '../utils/richText.js'
 
-const firstImageFromHtml = (html = '') => {
-	if (!html) return ''
-
-	const parser = new DOMParser()
-	const doc = parser.parseFromString(String(html), 'text/html')
-	const image = doc.querySelector('img')
-	return image?.getAttribute('src') || ''
-}
-
 const isShared = (note) => {
 	if (note?.isShared) return true
 	if (Array.isArray(note?.collaborators) && note.collaborators.length > 0) return true
@@ -74,13 +65,6 @@ const SharedNotes = () => {
 				<div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 				{sharedNotes.map((note) => (
 					<article key={note._id} className="rounded-[28px] border border-[#edf0f2] bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-						{note.category !== 'Documents' && firstImageFromHtml(note.content) ? (
-							<img
-								src={firstImageFromHtml(note.content)}
-								alt={note.title || 'Note image'}
-								className="mb-4 h-44 w-full rounded-2xl object-cover"
-							/>
-						) : null}
 						<span className="inline-flex rounded-full bg-[#eef7f1] px-4 py-2 text-sm font-semibold text-[#2f7d4f]">
 							{note.category || 'General'}
 						</span>

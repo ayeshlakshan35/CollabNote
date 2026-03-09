@@ -58,8 +58,11 @@ const Navbar = () => {
 
 	return (
 		<aside className="hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-[#e5e7eb] bg-blu p-4 lg:sticky lg:top-0 lg:flex lg:flex-col xl:w-72 xl:p-6">
-			<Link className="block w-full text-3xl leading-tight font-bold tracking-tight text-[#1f2937] xl:text-4xl" to="/dashboard">
-				COLLABNOTE
+			<Link className="block w-full" to="/dashboard">
+				<h1 className="inline-flex wrap-nowrap text-[2rem] font-extrabold leading-none tracking-tight xl:text-4xl">
+					<span className="text-[#2f7d4f]">COLLAB</span>
+					<span className="text-[#111827]">NOTE</span>
+				</h1>
 			</Link>
 
 			<nav className="mt-8 space-y-2">

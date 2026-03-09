@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { createNote, getNote, toApiError, updateNote, uploadNoteImage } from '../services/api'
+import { createNote, getNote, toApiError, updateNote } from '../services/api'
 import NoteCollaboratorsPanel from '../components/NoteCollaboratorsPanel.jsx'
 import { useAuth } from '../context/useAuth.js'
 import { NOTE_CATEGORIES } from '../utils/categories.js'
@@ -10,44 +10,6 @@ const initialForm = {
   title: '',
   category: NOTE_CATEGORIES[0],
   content: '',
-}
-
-const escapeHtmlAttribute = (value = '') =>
-  String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-
-const insertHtmlAtCursor = (editorElement, html) => {
-  if (!editorElement) return false
-
-  const selection = window.getSelection()
-  if (!selection || selection.rangeCount === 0) {
-    editorElement.insertAdjacentHTML('beforeend', html)
-    return true
-  }
-
-  const range = selection.getRangeAt(0)
-  if (!editorElement.contains(range.commonAncestorContainer)) {
-    editorElement.insertAdjacentHTML('beforeend', html)
-    return true
-  }
-
-  range.deleteContents()
-
-  const fragment = range.createContextualFragment(html)
-  const lastNode = fragment.lastChild
-  range.insertNode(fragment)
-
-  if (lastNode) {
-    range.setStartAfter(lastNode)
-    range.collapse(true)
-    selection.removeAllRanges()
-    selection.addRange(range)
-  }
-
-  return true
 }
 
 const NoteEditor = ({ mode }) => {
@@ -62,9 +24,7 @@ const NoteEditor = ({ mode }) => {
   const [error, setError] = useState('')
   const [documentFile, setDocumentFile] = useState(null)
   const [existingDocument, setExistingDocument] = useState({ url: '', name: '' })
-  const [uploadingImage, setUploadingImage] = useState(false)
   const editorRef = useRef(null)
-  const imageInputRef = useRef(null)
 
   const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
   const fileBaseUrl = apiBase.replace(/\/api\/?$/, '')
@@ -139,56 +99,6 @@ const NoteEditor = ({ mode }) => {
   const handleDocumentChange = (event) => {
     const selectedFile = event.target.files?.[0] || null
     setDocumentFile(selectedFile)
-  }
-
-  const handleInsertImageClick = () => {
-    imageInputRef.current?.click()
-  }
-
-  const handleInsertImage = async (event) => {
-    const imageFile = event.target.files?.[0] || null
-    event.target.value = ''
-
-    if (!imageFile) return
-
-    if (!imageFile.type.startsWith('image/')) {
-      setError('Please select a valid image file.')
-      return
-    }
-
-    try {
-      setError('')
-      setUploadingImage(true)
-      const uploaded = await uploadNoteImage(imageFile)
-      const imageUrl = uploaded?.url ? `${fileBaseUrl}${uploaded.url}` : ''
-
-      if (!imageUrl || !editorRef.current) {
-        setError('Unable to insert image.')
-        return
-      }
-
-      editorRef.current.focus()
-      const safeUrl = escapeHtmlAttribute(imageUrl)
-      const safeAlt = escapeHtmlAttribute(imageFile.name || 'Inserted image')
-      const inserted = insertHtmlAtCursor(
-        editorRef.current,
-        `<p><img src="${safeUrl}" alt="${safeAlt}" /></p>`
-      )
-
-      if (!inserted) {
-        setError('Unable to insert image.')
-        return
-      }
-
-      setFormData((previous) => ({
-        ...previous,
-        content: editorRef.current.innerHTML,
-      }))
-    } catch (apiError) {
-      setError(toApiError(apiError, 'Unable to upload image.'))
-    } finally {
-      setUploadingImage(false)
-    }
   }
 
   const isCollaborator = Array.isArray(collaborators)
@@ -358,9 +268,6 @@ const NoteEditor = ({ mode }) => {
                     <button type="button" onClick={() => applyCommand('hiliteColor', '#fff09e')} className="rich-editor-btn">Highlight</button>
                     <button type="button" onClick={() => applyCommand('insertUnorderedList')} className="rich-editor-btn">Bullets</button>
                     <button type="button" onClick={() => applyCommand('insertOrderedList')} className="rich-editor-btn">Numbered</button>
-                    <button type="button" onClick={handleInsertImageClick} className="rich-editor-btn" disabled={uploadingImage}>
-                      {uploadingImage ? 'Uploading...' : 'Image'}
-                    </button>
                     <button type="button" onClick={() => applyCommand('removeFormat')} className="rich-editor-btn">Clear</button>
 
                     <label className="sr-only" htmlFor="font-family">Font family</label>
@@ -401,14 +308,6 @@ const NoteEditor = ({ mode }) => {
                     data-placeholder="Write field observations, issues, harvest data, or action items..."
                     onInput={handleEditorInput}
                     suppressContentEditableWarning
-                  />
-
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-                    className="hidden"
-                    onChange={handleInsertImage}
                   />
                 </div>
               </>
