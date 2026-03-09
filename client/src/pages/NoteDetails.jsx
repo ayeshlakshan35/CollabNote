@@ -12,6 +12,10 @@ const NoteDetails = () => {
 	const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 	const fileBaseUrl = apiBase.replace(/\/api\/?$/, '')
 	const isDocumentNote = note?.category === 'Documents'
+	const isSharedNote =
+		Boolean(note?.isShared) ||
+		(Array.isArray(note?.collaborators) && note.collaborators.length > 0) ||
+		(Array.isArray(note?.sharedWith) && note.sharedWith.length > 0)
 
 	useEffect(() => {
 		if (!id) return
@@ -42,63 +46,98 @@ const NoteDetails = () => {
 	}
 
 	if (loading) {
-		return <p className="text-sm text-[#5f554b]">Loading note details...</p>
+		return (
+			<section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+				<p className="rounded-2xl border border-[#e5e7eb] bg-white px-4 py-3 text-[#6b7280]">Loading note details...</p>
+			</section>
+		)
 	}
 
 	if (error && !note) {
 		return (
-			<section className="card-surface p-6">
-				<p className="rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p>
-				<Link className="agro-btn-secondary mt-4 inline-flex" to="/dashboard">
+			<section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+				<div className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
+					<p className="rounded-2xl border border-[#f3c7bf] bg-[#fce9e5] px-4 py-3 text-sm text-[#8a2f22]">{error}</p>
+					<Link
+						className="mt-4 inline-flex rounded-xl border border-[#d1d5db] px-4 py-2 text-sm font-medium text-[#374151] transition hover:border-[#2f7d4f] hover:text-[#2f7d4f]"
+						to="/dashboard"
+					>
 					Back to Dashboard
 				</Link>
+				</div>
 			</section>
 		)
 	}
 
 	return (
-		<section className="card-surface p-6 sm:p-8">
-			<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a6e64]">{note?.category || 'General'}</p>
-			<h1 className="mt-2 font-display text-3xl text-[#2f2722]">{note?.title || 'Untitled note'}</h1>
-			{isDocumentNote ? (
-				<div className="mt-5 rounded-2xl border border-[#e7ddcf] bg-[#fffdfa] p-4">
-					<p className="text-sm text-[#5f554b]">PDF Document attached to this note.</p>
-					{note?.documentUrl ? (
-						<a
-							href={`${fileBaseUrl}${note.documentUrl}`}
-							target="_blank"
-							rel="noreferrer"
-							className="mt-3 inline-flex font-semibold text-[#365d3d]"
-						>
-							Open {note?.documentName || 'PDF'}
-						</a>
+		<section className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
+			<div className="space-y-6">
+				<div className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.06)]">
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div>
+							<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6b7280]">{note?.category || 'General'}</p>
+							<h1 className="mt-2 text-4xl font-bold tracking-tight text-[#1f2937]">{note?.title || 'Untitled note'}</h1>
+						</div>
+						{isSharedNote ? (
+							<span className="inline-flex rounded-full bg-[#eef2ff] px-4 py-2 text-sm font-semibold text-[#3749a6]">View only</span>
+						) : null}
+					</div>
+				</div>
+
+				<div className="rounded-3xl border border-[#e5e7eb] bg-white p-6 shadow-sm">
+					{isDocumentNote ? (
+						<div className="rounded-2xl border border-[#e7ecf0] bg-[#f9fafb] p-4">
+							<p className="text-sm text-[#4b5563]">PDF document attached to this note.</p>
+							{note?.documentUrl ? (
+								<a
+									href={`${fileBaseUrl}${note.documentUrl}`}
+									target="_blank"
+									rel="noreferrer"
+									className="mt-3 inline-flex font-semibold text-[#2f7d4f] hover:underline"
+								>
+									Open {note?.documentName || 'PDF'}
+								</a>
+							) : (
+								<p className="mt-2 text-sm text-[#8a2f22]">No document file found.</p>
+							)}
+						</div>
 					) : (
-						<p className="mt-2 text-sm text-[#8a2f22]">No document file found.</p>
+						<div
+							className="rich-rendered-content text-base leading-7 text-[#374151]"
+							dangerouslySetInnerHTML={{
+								__html: sanitizeRichTextHtml(note?.content || '<p>No content provided.</p>'),
+							}}
+						/>
 					)}
 				</div>
-			) : (
-				<div
-					className="rich-rendered-content mt-5 text-sm leading-7 text-[#3d342e]"
-					dangerouslySetInnerHTML={{
-						__html: sanitizeRichTextHtml(note?.content || '<p>No content provided.</p>'),
-					}}
-				/>
-			)}
 
-			{error ? <p className="mt-5 rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}
+				{error ? <p className="rounded-2xl border border-[#f3c7bf] bg-[#fce9e5] px-4 py-3 text-sm text-[#8a2f22]">{error}</p> : null}
 
-			<div className="mt-8 flex flex-wrap gap-3">
-				<Link className="agro-btn-secondary" to="/dashboard">
-					Back
-				</Link>
-				{id ? (
-					<Link className="agro-btn-primary" to={`/notes/${id}/edit`}>
-						Edit
+				<div className="flex flex-wrap gap-3">
+					<Link
+						className="inline-flex rounded-xl border border-[#d1d5db] px-4 py-2 text-sm font-medium text-[#374151] transition hover:border-[#2f7d4f] hover:text-[#2f7d4f]"
+						to={isSharedNote ? '/shared' : '/dashboard'}
+					>
+						Back
 					</Link>
-				) : null}
-				<button className="agro-btn-secondary" type="button" onClick={handleDelete}>
-					Delete
-				</button>
+					{!isSharedNote && id ? (
+						<Link
+							className="inline-flex rounded-xl bg-[#2f7d4f] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#276943]"
+							to={`/notes/${id}/edit`}
+						>
+							Edit
+						</Link>
+					) : null}
+					{!isSharedNote ? (
+						<button
+							className="inline-flex rounded-xl border border-[#f0c2b8] bg-[#fff5f2] px-4 py-2 text-sm font-medium text-[#8a2f22] transition hover:bg-[#ffe9e3]"
+							type="button"
+							onClick={handleDelete}
+						>
+							Delete
+						</button>
+					) : null}
+				</div>
 			</div>
 		</section>
 	)
