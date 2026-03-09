@@ -1,24 +1,47 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { deleteNote, getNotes, getNotesStats, toApiError } from '../services/api.js'
+import { deleteNote, getNotes, getNotesStats, searchNotes, toApiError } from '../services/api.js'
 import { richTextPreview } from '../utils/richText.js'
+import { NOTE_CATEGORIES } from '../utils/categories.js'
 
 const Dashboard = () => {
 	const [notes, setNotes] = useState([])
 	const [stats, setStats] = useState({ totalNotes: 0, topCategory: null, topCategoryCount: 0 })
+	const [selectedCategory, setSelectedCategory] = useState('')
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
 
 	useEffect(() => {
-		const loadDashboardData = async () => {
+		const loadStats = async () => {
 			try {
-				const [notesData, statsData] = await Promise.all([getNotes(), getNotesStats()])
-				setNotes(Array.isArray(notesData) ? notesData : [])
+				const statsData = await getNotesStats()
 				setStats({
 					totalNotes: Number(statsData?.totalNotes || 0),
 					topCategory: statsData?.topCategory || null,
 					topCategoryCount: Number(statsData?.topCategoryCount || 0),
 				})
+			} catch (apiError) {
+				setError(toApiError(apiError, 'Unable to load dashboard stats.'))
+			}
+		}
+
+		loadStats()
+	}, [])
+
+	useEffect(() => {
+		const loadNotes = async () => {
+			setLoading(true)
+			setError('')
+
+			try {
+				if (selectedCategory) {
+					const filtered = await searchNotes({ category: selectedCategory })
+					setNotes(Array.isArray(filtered) ? filtered : [])
+					return
+				}
+
+				const allNotes = await getNotes()
+				setNotes(Array.isArray(allNotes) ? allNotes : [])
 			} catch (apiError) {
 				setError(toApiError(apiError, 'Unable to load notes.'))
 			} finally {
@@ -26,8 +49,8 @@ const Dashboard = () => {
 			}
 		}
 
-		loadDashboardData()
-	}, [])
+		loadNotes()
+	}, [selectedCategory])
 
 	const handleDelete = async (id) => {
 		if (!window.confirm('Delete this note?')) return
@@ -64,13 +87,36 @@ const Dashboard = () => {
 				</Link>
 			</div>
 
+			<div className="card-surface flex flex-wrap items-center gap-3 p-4 sm:p-5">
+				<label className="field-label m-0" htmlFor="dashboard-category-filter">
+					Filter by category
+				</label>
+				<select
+					id="dashboard-category-filter"
+					className="agro-input max-w-xs"
+					value={selectedCategory}
+					onChange={(event) => setSelectedCategory(event.target.value)}
+				>
+					<option value="">All categories</option>
+					{NOTE_CATEGORIES.map((category) => (
+						<option key={category} value={category}>
+							{category}
+						</option>
+					))}
+				</select>
+			</div>
+
 			{error ? <p className="rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}
 
 			{loading ? <p className="text-sm text-[#5f554b]">Loading notes...</p> : null}
 
 			{!loading && notes.length === 0 ? (
 				<div className="card-surface p-8 text-center">
-					<p className="text-[#5f554b]">No notes yet. Create your first note to get started.</p>
+					<p className="text-[#5f554b]">
+						{selectedCategory
+							? `No notes found in ${selectedCategory}.`
+							: 'No notes yet. Create your first note to get started.'}
+					</p>
 				</div>
 			) : null}
 
