@@ -1,7 +1,48 @@
 import Note from '../models/Note.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
+import fs from 'fs/promises';
+import path from 'path';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const sanitizeNoteContent = (value = '') =>
+  String(value)
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)=("|')\s*javascript:[\s\S]*?\2/gi, '');
+
+const contentToPlainText = (value = '') =>
+  String(value)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const isDocumentCategory = (category = '') => String(category).trim().toLowerCase() === 'documents';
+
+const removeStoredFile = async (documentUrl = '') => {
+  if (!documentUrl) return;
+
+  const fileName = path.basename(documentUrl);
+  const filePath = path.join(process.cwd(), 'uploads', fileName);
+
+  try {
+    await fs.unlink(filePath);
+  } catch {
+    // Ignore missing file cleanup failures to avoid blocking note operations.
+  }
+};
+
+const buildDocumentPayload = (file) => {
+  if (!file) return null;
+
+  return {
+    documentUrl: `/uploads/${file.filename}`,
+    documentName: file.originalname || file.filename,
+    documentMimeType: file.mimetype || 'application/pdf',
+  };
+};
 
 const buildAccessQuery = (userId) => ({
   $or: [{ owner: userId }, { collaborators: userId }],
@@ -33,6 +74,7 @@ const searchNotes = async (req, res) => {
           $or: [
             { title: { $regex: q, $options: 'i' } },
             { content: { $regex: q, $options: 'i' } },
+            { documentName: { $regex: q, $options: 'i' } },
           ],
         },
       ];
@@ -49,6 +91,47 @@ const searchNotes = async (req, res) => {
     return res.json(notes);
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Unable to search notes' });
+  }
+};
+
+const getNotesStats = async (req, res) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+
+    const categories = await Note.aggregate([
+      {
+        $match: {
+          $or: [{ owner: userId }, { collaborators: userId }],
+        },
+      },
+      {
+        $group: {
+          _id: '$category',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          count: -1,
+          _id: 1,
+        },
+      },
+    ]);
+
+    const totalNotes = categories.reduce((sum, item) => sum + item.count, 0);
+    const topCategory = categories[0] || null;
+
+    return res.json({
+      totalNotes,
+      topCategory: topCategory ? topCategory._id : null,
+      topCategoryCount: topCategory ? topCategory.count : 0,
+      categories: categories.map((item) => ({
+        category: item._id,
+        count: item.count,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Unable to fetch note stats' });
   }
 };
 
@@ -73,16 +156,32 @@ const getNote = async (req, res) => {
 
 const createNote = async (req, res) => {
   try {
-    const { title, category, content } = req.body;
+    const { title, category, content } = req.body || {};
+    const safeContent = sanitizeNoteContent(content);
+    const normalizedTitle = String(title || '').trim();
+    const normalizedCategory = String(category || '').trim();
+    const docNote = isDocumentCategory(normalizedCategory);
+    const uploadedDocument = buildDocumentPayload(req.file);
 
-    if (!title || !category || !content) {
-      return res.status(400).json({ message: 'Title, category, and content are required' });
+    if (!normalizedTitle || !normalizedCategory) {
+      return res.status(400).json({ message: 'Title and category are required' });
+    }
+
+    if (docNote && !uploadedDocument) {
+      return res.status(400).json({ message: 'Please upload a PDF for Documents category' });
+    }
+
+    if (!docNote && !contentToPlainText(safeContent)) {
+      return res.status(400).json({ message: 'Note content is required for this category' });
     }
 
     const note = await Note.create({
-      title,
-      category,
-      content,
+      title: normalizedTitle,
+      category: normalizedCategory,
+      content: docNote ? '' : safeContent,
+      documentUrl: uploadedDocument?.documentUrl || '',
+      documentName: uploadedDocument?.documentName || '',
+      documentMimeType: uploadedDocument?.documentMimeType || '',
       owner: req.user.id,
       collaborators: [],
     });
@@ -95,10 +194,15 @@ const createNote = async (req, res) => {
 
 const updateNote = async (req, res) => {
   try {
-    const { title, category, content } = req.body;
+    const { title, category, content } = req.body || {};
+    const safeContent = sanitizeNoteContent(content);
+    const normalizedTitle = String(title || '').trim();
+    const normalizedCategory = String(category || '').trim();
+    const docNote = isDocumentCategory(normalizedCategory);
+    const uploadedDocument = buildDocumentPayload(req.file);
 
-    if (!title || !category || !content) {
-      return res.status(400).json({ message: 'Title, category, and content are required' });
+    if (!normalizedTitle || !normalizedCategory) {
+      return res.status(400).json({ message: 'Title and category are required' });
     }
 
     const note = await Note.findOne({ _id: req.params.id, owner: req.user.id });
@@ -106,9 +210,36 @@ const updateNote = async (req, res) => {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    note.title = title;
-    note.category = category;
-    note.content = content;
+    if (docNote) {
+      if (!uploadedDocument && !note.documentUrl) {
+        return res.status(400).json({ message: 'Please upload a PDF for Documents category' });
+      }
+
+      if (uploadedDocument) {
+        await removeStoredFile(note.documentUrl);
+        note.documentUrl = uploadedDocument.documentUrl;
+        note.documentName = uploadedDocument.documentName;
+        note.documentMimeType = uploadedDocument.documentMimeType;
+      }
+
+      note.content = '';
+    } else {
+      if (!contentToPlainText(safeContent)) {
+        return res.status(400).json({ message: 'Note content is required for this category' });
+      }
+
+      if (note.documentUrl) {
+        await removeStoredFile(note.documentUrl);
+      }
+
+      note.content = safeContent;
+      note.documentUrl = '';
+      note.documentName = '';
+      note.documentMimeType = '';
+    }
+
+    note.title = normalizedTitle;
+    note.category = normalizedCategory;
 
     await note.save();
     return res.json(note);
@@ -122,6 +253,10 @@ const deleteNote = async (req, res) => {
     const note = await Note.findOne({ _id: req.params.id, owner: req.user.id });
     if (!note) {
       return res.status(404).json({ message: 'Note not found' });
+    }
+
+    if (note.documentUrl) {
+      await removeStoredFile(note.documentUrl);
     }
 
     await note.deleteOne();
@@ -206,6 +341,7 @@ export {
   deleteNote,
   getNote,
   getNotes,
+  getNotesStats,
   removeCollaborator,
   searchNotes,
   updateNote,
