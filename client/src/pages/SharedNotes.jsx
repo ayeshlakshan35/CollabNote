@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getNotes, toApiError } from '../services/api.js'
+import { richTextPreview } from '../utils/richText.js'
 
 const isShared = (note) => {
 	if (note?.isShared) return true
@@ -52,7 +53,7 @@ const SharedNotes = () => {
 					<article key={note._id} className="card-surface p-5">
 						<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a6e64]">{note.category || 'General'}</p>
 						<h2 className="mt-2 text-xl font-semibold text-[#2f2722]">{note.title || 'Untitled note'}</h2>
-						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">{note.content || 'No content provided.'}</p>
+						<p className="mt-2 line-clamp-3 text-sm text-[#5f554b]">{richTextPreview(note.content || '', 180) || 'No content provided.'}</p>
 
 						<div className="mt-4 rounded-xl border border-[#e7ddcf] bg-[#fffdfa] p-3">
 							<p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#7a6e64]">Owner</p>

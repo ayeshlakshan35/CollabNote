@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { deleteNote, getNote, toApiError } from '../services/api.js'
+import { sanitizeRichTextHtml } from '../utils/richText.js'
 
 const NoteDetails = () => {
 	const { id } = useParams()
@@ -56,7 +57,12 @@ const NoteDetails = () => {
 		<section className="card-surface p-6 sm:p-8">
 			<p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7a6e64]">{note?.category || 'General'}</p>
 			<h1 className="mt-2 font-display text-3xl text-[#2f2722]">{note?.title || 'Untitled note'}</h1>
-			<p className="mt-5 whitespace-pre-wrap text-sm leading-7 text-[#3d342e]">{note?.content || 'No content provided.'}</p>
+			<div
+				className="rich-rendered-content mt-5 text-sm leading-7 text-[#3d342e]"
+				dangerouslySetInnerHTML={{
+					__html: sanitizeRichTextHtml(note?.content || '<p>No content provided.</p>'),
+				}}
+			/>
 
 			{error ? <p className="mt-5 rounded-xl bg-[#fce9e5] px-3 py-2 text-sm text-[#8a2f22]">{error}</p> : null}
 
