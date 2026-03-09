@@ -1,244 +1,245 @@
 # CollabNote
 
-**CollabNote** is a collaborative note-taking web application built using the **MERN stack (MongoDB, Express, React, Node.js)**.  
-It allows users to **create, manage, search, and share notes with collaborators** through a clean and responsive web interface.
+CollabNote is a collaborative note-taking web application built with the MERN stack.
 
-This project demonstrates **full-stack web development**, including authentication, REST APIs, and database integration.
+It allows users to register, log in, create and manage notes, collaborate with other users, search and filter notes, and manage document notes with PDF upload support.
 
----
+## Project Goal
+
+This project was built to demonstrate full-stack MERN development skills for a technical assessment, including authentication, CRUD operations, file upload handling, rich text editing, collaborator management, and responsive UI design.
 
 ## Tech Stack
 
 ### Frontend
-- **React** – UI library
-- **Vite** – Development server and build tool
-- **Tailwind CSS** – Utility-first CSS framework
-- **React Router** – Client-side routing
-- **Axios** – HTTP client for API requests
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Axios
 
 ### Backend
-- **Node.js** – JavaScript runtime
-- **Express.js** – Backend web framework
-- **MongoDB** – NoSQL database
-- **Mongoose** – MongoDB object modeling
-- **JWT** – Authentication tokens
-- **bcryptjs** – Password hashing
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcryptjs
+- Multer (PDF upload handling)
 
----
-
-## Features
+## Current Features
 
 - User registration and login
-- JWT authentication
+- JWT-based protected routes
 - Create, edit, and delete notes
-- Share notes with collaborators
-- Search notes
-- Responsive dashboard
-- Protected routes
-- Rich text note editing
+- Rich text note editor with formatting toolbar
+- Document notes with PDF upload and view support
+- Shared notes and collaborator management
+- Search notes by text and category
+- Notes statistics endpoint for dashboard and category insights
+- Responsive dashboard with modern sidebar-based navigation
 
----
+## Key Implementation Highlights
+
+- Built protected authentication flow using JWT
+- Implemented note CRUD operations with search and category filtering
+- Added PDF upload support for document notes using Multer
+- Created a rich text editor toolbar for formatted note content
+- Added collaborator management for shared notes
+- Designed a responsive dashboard with note statistics and category insights
 
 ## Project Structure
 
-CollabNote
-│
-├── client                      # React frontend
-│   ├── public
-│   │   └── vite.svg
-│   │
-│   ├── src
-│   │   ├── assets
-│   │   │   ├── images
-│   │   │   └── icons
-│   │   │
-│   │   ├── components
+```text
+CollabNote/
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   │   ├── icons/
+│   │   │   └── images/
+│   │   ├── components/
 │   │   │   ├── Navbar.jsx
-│   │   │   ├── ProtectedRoute.jsx
 │   │   │   ├── NoteCard.jsx
-│   │   │   └── Loader.jsx
-│   │   │
-│   │   ├── pages
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
+│   │   │   └── NoteCollaboratorsPanel.jsx
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── useAuth.js
+│   │   ├── pages/
 │   │   │   ├── Dashboard.jsx
-│   │   │   ├── NoteEditor.jsx
+│   │   │   ├── Login.jsx
 │   │   │   ├── NoteDetails.jsx
+│   │   │   ├── NoteEditor.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   ├── Register.jsx
 │   │   │   └── SharedNotes.jsx
-│   │   │
-│   │   ├── context
-│   │   │   └── AuthContext.jsx
-│   │   │
-│   │   ├── services
+│   │   ├── services/
 │   │   │   └── api.js
-│   │   │
-│   │   ├── utils
-│   │   │   └── helpers.js
-│   │   │
-│   │   ├── styles
+│   │   ├── styles/
 │   │   │   └── index.css
-│   │   │
+│   │   ├── utils/
+│   │   │   ├── categories.js
+│   │   │   └── richText.js
 │   │   ├── App.jsx
+│   │   ├── index.css
 │   │   └── main.jsx
-│   │
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
-│
-└── server                      # Node.js backend
-    │
-    ├── config
-    │   └── db.js               # MongoDB connection
-    │
-    ├── controllers
-    │   └── authController.js   # Authentication logic
-    │
-    ├── middleware
-    │   └── authMiddleware.js   # JWT route protection
-    │
-    ├── models
-    │   └── User.js             # User schema
-    │
-    ├── routes
-    │   └── authRoutes.js       # Authentication API routes
-    │
-    ├── utils
-    │   └── generateToken.js    # JWT helper
-    │
-    ├── .env
+└── server/
+    ├── config/
+    │   └── db.js
+    ├── controllers/
+    │   ├── authController.js
+    │   └── noteController.js
+    ├── middleware/
+    │   ├── authMiddleware.js
+    │   └── uploadMiddleware.js
+    ├── models/
+    │   ├── Note.js
+    │   └── User.js
+    ├── routes/
+    │   ├── authRoutes.js
+    │   └── noteRoutes.js
+    ├── scripts/
+    │   └── seed.js
+    ├── utils/
+    │   └── generateToken.js
     ├── package.json
-    └── server.js               # Express server entry point
-
----
+    └── server.js
 
 ## Prerequisites
 
-Before running this project, make sure you have installed:
+Before running this project, make sure you have the following installed:
 
-- Node.js (v14 or higher)
-- npm or yarn
+- Node.js 18 or higher
+- npm
 - MongoDB (local installation or MongoDB Atlas)
 
----
+## Installation and Run
 
-## Installation
-
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd CollabNote
-```
 
----
+### 2. Backend Setup
 
-## Backend Setup
+    cd server
+    npm install
 
-Install backend dependencies:
+Create a .env file inside the server folder:
 
-```bash
-cd server
-npm install
-```
+    PORT=5000
+    MONGO_URI=your_mongodb_connection_string
+    JWT_SECRET=your_jwt_secret
 
-Create a `.env` file inside the **server** folder:
+Run the backend server:
 
-```
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-```
+    npm run dev
 
-Start the backend server:
+The backend will run at:
 
-```bash
-npm run dev
-```
+    http://localhost:5000
 
-The backend server will run on:
+### 3. Frontend Setup
 
-```
-http://localhost:5000
-```
+    cd ../client
+    npm install
 
----
+Create a .env file inside the client folder (optional but recommended):
 
-## Frontend Setup
+    VITE_API_URL=http://localhost:5000/api
 
-Install frontend dependencies:
+Run the frontend server:
 
-```bash
-cd client
-npm install
-```
+    npm run dev
 
-(Optional) create `.env` in the client folder:
+The frontend will run at:
 
-```
-VITE_API_URL=http://localhost:5000
-```
+    http://localhost:5173
 
-Start the frontend:
+### API Endpoints
 
-```bash
-npm run dev
-```
+###Authentication
 
-The frontend will run on:
+    POST /api/auth/register - Register a new user
+    
+    POST /api/auth/login - Log in a user
 
-```
-http://localhost:5173
-```
+###Notes
 
----
+    GET /api/notes - Get all accessible notes (owned and collaborated)
+    
+    GET /api/notes/search?q=&category= - Search notes by text or category
+    
+    GET /api/notes/stats - Get note statistics by category
+    
+    GET /api/notes/:id - Get a single note
+    
+    POST /api/notes - Create a note
+    
+    PUT /api/notes/:id - Update a note
+    
+    DELETE /api/notes/:id - Delete a note
+    
+    POST /api/notes/:id/collaborators - Add a collaborator by email
+    
+    DELETE /api/notes/:id/collaborators/:userId - Remove a collaborator
 
-## API Endpoints
+### Scripts
+Client (client/package.json)
+    npm run dev
 
-### Authentication
+Server (server/package.json)
+    npm start
 
-| Method | Endpoint | Description |
-|------|------|------|
-| POST | /api/auth/register | Register new user |
-| POST | /api/auth/login | Login user |
+### Features
 
-### Notes
+    User registration and login
+    
+    Create, edit, and delete notes
+    
+    Search notes by keyword or category
+    
+    Upload PDF files for document notes
+    
+    Share notes with collaborators
+    
+    Dashboard statistics for notes
 
-| Method | Endpoint | Description |
-|------|------|------|
-| GET | /api/notes | Get all notes |
-| POST | /api/notes | Create a note |
-| GET | /api/notes/:id | Get a specific note |
-| PUT | /api/notes/:id | Update a note |
-| DELETE | /api/notes/:id | Delete a note |
+### How to Test
 
----
+    Register a new user account
+    
+    Log in with valid credentials
+    
+    Create a normal text note
+    
+    Create a document note with PDF upload
+    
+    Edit and delete notes
+    
+    Search notes by keyword or category
+    
+    Add collaborators to a shared note
+    
+    Verify dashboard statistics update correctly
 
-## Security
+### Future Improvements
 
-- Password hashing using **bcrypt**
-- Authentication handled with **JWT tokens**
-- Protected API routes
-- Environment variables for sensitive configuration
+    Real-time collaboration with WebSockets
+    
+    Note comments and activity history
+    
+    Better permission control for collaborators
+    
+    Notification system
+    
+    Profile settings and avatars
+    
+    Dark mode support
 
----
+### Author
 
-## Future Improvements
-
-Possible improvements for the application:
-
-- Real-time collaboration
-- Note categories and tags
-- Notifications for shared notes
-- Dark mode support
-
----
-
-## License
-
-This project is licensed under the **MIT License**.
-
----
-
-## Author
-
-This project was developed as a **MERN stack full-stack web application** demonstrating collaborative note management functionality.
+    Ayesha Lakshan
