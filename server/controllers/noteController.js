@@ -4,6 +4,19 @@ import mongoose from 'mongoose';
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const sanitizeNoteContent = (value = '') =>
+  String(value)
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+=("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/\s(href|src)=("|')\s*javascript:[\s\S]*?\2/gi, '');
+
+const contentToPlainText = (value = '') =>
+  String(value)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const buildAccessQuery = (userId) => ({
   $or: [{ owner: userId }, { collaborators: userId }],
 });
@@ -116,15 +129,16 @@ const getNote = async (req, res) => {
 const createNote = async (req, res) => {
   try {
     const { title, category, content } = req.body;
+    const safeContent = sanitizeNoteContent(content);
 
-    if (!title || !category || !content) {
+    if (!title || !category || !contentToPlainText(safeContent)) {
       return res.status(400).json({ message: 'Title, category, and content are required' });
     }
 
     const note = await Note.create({
-      title,
-      category,
-      content,
+      title: String(title).trim(),
+      category: String(category).trim(),
+      content: safeContent,
       owner: req.user.id,
       collaborators: [],
     });
@@ -138,8 +152,9 @@ const createNote = async (req, res) => {
 const updateNote = async (req, res) => {
   try {
     const { title, category, content } = req.body;
+    const safeContent = sanitizeNoteContent(content);
 
-    if (!title || !category || !content) {
+    if (!title || !category || !contentToPlainText(safeContent)) {
       return res.status(400).json({ message: 'Title, category, and content are required' });
     }
 
@@ -148,9 +163,9 @@ const updateNote = async (req, res) => {
       return res.status(404).json({ message: 'Note not found' });
     }
 
-    note.title = title;
-    note.category = category;
-    note.content = content;
+    note.title = String(title).trim();
+    note.category = String(category).trim();
+    note.content = safeContent;
 
     await note.save();
     return res.json(note);
