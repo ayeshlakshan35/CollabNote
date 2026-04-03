@@ -26,7 +26,7 @@ const PrivateLayout = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f3f4f6]">
+    <div className="flex min-h-screen flex-col bg-[#f3f4f6] lg:flex-row">
       <Navbar />
       <Outlet />
     </div>
