@@ -9,8 +9,6 @@ import noteRoutes from "./routes/noteRoutes.js";
 
 dotenv.config();
 
-connectDB();
-
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -66,9 +64,19 @@ app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error.message);
+    process.exit(1);
+  }
+};
+
+startServer();
