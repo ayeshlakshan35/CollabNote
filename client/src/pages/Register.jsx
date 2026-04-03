@@ -69,8 +69,8 @@ const Register = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f3f4f6]">
-      <div className="flex h-full overflow-hidden bg-white">
+    <div className="min-h-dvh bg-[#f3f4f6]">
+      <div className="flex min-h-dvh bg-white">
         <div className="hidden w-1/2 items-end justify-center bg-[#f8faf8] p-8 lg:flex">
           <img
             src={registerImage}
@@ -79,8 +79,8 @@ const Register = () => {
           />
         </div>
 
-        <div className="flex w-full items-center justify-center overflow-y-auto px-6 py-6 sm:px-10 lg:w-1/2 lg:px-14">
-          <div className="w-full max-w-120">
+        <div className="flex w-full items-center justify-center overflow-y-auto px-4 py-6 sm:px-8 lg:w-1/2 lg:px-14">
+          <div className="w-full max-w-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7a6e64]">
               CollabNote
             </p>
