@@ -1,117 +1,110 @@
 # CollabNote
 
-CollabNote is a collaborative note management web application built using the MERN stack.
+CollabNote is a collaborative note-taking web application built with the MERN stack.
+
+It allows users to register/login, create and manage notes, collaborate with other users, search/filter notes, and manage document notes with PDF upload support.
 
 ## Tech Stack
 
 ### Frontend
-- **React** - UI library
-- **Vite** - Build tool & dev server
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Router** - Client-side routing
-- **Axios** - HTTP client
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Axios
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - MongoDB ODM
-- **JWT** - Authentication
-- **bcryptjs** - Password hashing
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcryptjs
+- Multer (PDF upload handling)
+
+## Current Features
+
+- User registration and login
+- JWT-based protected routes
+- Create, edit, delete notes
+- Rich text note editor (formatting toolbar)
+- Document notes (PDF upload and view)
+- Shared notes and collaborator management
+- Search notes by text/category
+- Notes statistics endpoint for dashboard/category insights
+- Responsive modern dashboard/sidebar layout
 
 ## Project Structure
 
-```
-CollabNote
-│
-├── client                      # React frontend
-│   ├── public
-│   │   └── vite.svg
-│   │
-│   ├── src
-│   │   ├── assets
-│   │   │   ├── images
-│   │   │   └── icons
-│   │   │
-│   │   ├── components
+```text
+CollabNote/
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── assets/
+│   │   │   ├── icons/
+│   │   │   └── images/
+│   │   ├── components/
 │   │   │   ├── Navbar.jsx
-│   │   │   ├── ProtectedRoute.jsx
 │   │   │   ├── NoteCard.jsx
-│   │   │   └── Loader.jsx
-│   │   │
-│   │   ├── pages
-│   │   │   ├── Login.jsx
-│   │   │   ├── Register.jsx
+│   │   │   └── NoteCollaboratorsPanel.jsx
+│   │   ├── context/
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── useAuth.js
+│   │   ├── pages/
 │   │   │   ├── Dashboard.jsx
-│   │   │   ├── NoteEditor.jsx
+│   │   │   ├── Login.jsx
 │   │   │   ├── NoteDetails.jsx
+│   │   │   ├── NoteEditor.jsx
+│   │   │   ├── NotFound.jsx
+│   │   │   ├── Register.jsx
 │   │   │   └── SharedNotes.jsx
-│   │   │
-│   │   ├── context
-│   │   │   └── AuthContext.jsx
-│   │   │
-│   │   ├── services
+│   │   ├── services/
 │   │   │   └── api.js
-│   │   │
-│   │   ├── utils
-│   │   │   └── helpers.js
-│   │   │
-│   │   ├── styles
+│   │   ├── styles/
 │   │   │   └── index.css
-│   │   │
+│   │   ├── utils/
+│   │   │   ├── categories.js
+│   │   │   └── richText.js
 │   │   ├── App.jsx
+│   │   ├── index.css
 │   │   └── main.jsx
-│   │
-│   ├── .gitignore
 │   ├── index.html
 │   ├── package.json
 │   └── vite.config.js
-│
-└── server                      # Node.js backend
-    │
-    ├── config
-    │   └── db.js               # MongoDB connection setup
-    │
-    ├── controllers
-    │   └── authController.js   # Authentication logic (register, login)
-    │
-    ├── middleware
-    │   └── authMiddleware.js   # JWT verification & route protection
-    │
-    ├── models
-    │   └── User.js             # User schema (Mongoose model)
-    │
-    ├── routes
-    │   └── authRoutes.js       # Authentication API endpoints
-    │
-    ├── utils
-    │   └── generateToken.js    # JWT token generation helper
-    │
-    ├── .env                    # Environment variables (not committed)
-    ├── package.json            # Server dependencies
-    └── server.js               # Express app entry point
+└── server/
+    ├── config/
+    │   └── db.js
+    ├── controllers/
+    │   ├── authController.js
+    │   └── noteController.js
+    ├── middleware/
+    │   ├── authMiddleware.js
+    │   └── uploadMiddleware.js
+    ├── models/
+    │   ├── Note.js
+    │   └── User.js
+    ├── routes/
+    │   ├── authRoutes.js
+    │   └── noteRoutes.js
+    ├── scripts/
+    │   └── seed.js
+    ├── utils/
+    │   └── generateToken.js
+    ├── package.json
+    └── server.js
 ```
-
-## Features
-- 🔐 User authentication (Register/Login with JWT)
-- 📝 Create, edit, and delete notes
-- 🤝 Share notes with collaborators
-- 🔍 Search and filter notes
-- 📱 Responsive dashboard
-- 🎨 Rich text editor
-- 🔒 Protected routes
-- ⚡ Real-time updates
 
 ## Prerequisites
 
-Before running this project, make sure you have the following installed:
-- **Node.js** (v14 or higher)
-- **npm** or **yarn**
-- **MongoDB** (local or MongoDB Atlas account)
+- Node.js 18+
+- npm
+- MongoDB (local or Atlas)
 
-## Setup Instructions
+## Installation and Run
 
-### 1. Clone the repository
+### 1. Clone
+
 ```bash
 git clone <repository-url>
 cd CollabNote
@@ -124,178 +117,81 @@ cd server
 npm install
 ```
 
-Create a `.env` file in the server directory:
+Create `server/.env`:
+
 ```env
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_key
-NODE_ENV=development
+JWT_SECRET=your_jwt_secret
 ```
 
-Run the server:
+Run backend:
+
 ```bash
-npm start
-# or for development with nodemon
 npm run dev
 ```
 
-The server will start on `http://localhost:5000`
+Backend runs at `http://localhost:5000`.
 
 ### 3. Frontend Setup
 
 ```bash
-cd client
+cd ../client
 npm install
 ```
 
-Create a `.env` file in the client directory (if needed):
+Create `client/.env` (optional but recommended):
+
 ```env
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5000/api
 ```
 
-Run the frontend:
+Run frontend:
+
 ```bash
 npm run dev
 ```
 
-The client will start on `http://localhost:5173`
+Frontend runs at `http://localhost:5173`.
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/register` - Register a new user
-  - **Body**: `{ name, email, password }`
-  - **Response**: `{ token, user: { id, name, email } }`
-  - **Status Codes**: 
-    - `201` - User created successfully
-    - `400` - Missing required fields
-    - `409` - Email already registered
-    - `500` - Server error
-
+### Auth
+- `POST /api/auth/register` - Register user
 - `POST /api/auth/login` - Login user
-  - **Body**: `{ email, password }`
-  - **Response**: `{ token, user: { id, name, email } }`
-  - **Status Codes**:
-    - `200` - Login successful
-    - `400` - Missing credentials
-    - `401` - Invalid credentials
-    - `500` - Server error
 
-### Notes (Coming soon)
-- `GET /api/notes` - Get all notes
-- `POST /api/notes` - Create a new note
-- `GET /api/notes/:id` - Get a specific note
-- `PUT /api/notes/:id` - Update a note
-- `DELETE /api/notes/:id` - Delete a note
-- `POST /api/notes/:id/share` - Share a note with collaborators
-
-## Project Structure Details
-
-### Client Components
-- **Navbar.jsx** - Navigation bar component
-- **ProtectedRoute.jsx** - Route protection wrapper
-- **NoteCard.jsx** - Note display card
-- **Loader.jsx** - Loading spinner component
-
-### Client Pages
-- **Login.jsx** - User login page
-- **Register.jsx** - User registration page
-- **Dashboard.jsx** - Main dashboard with notes overview
-- **NoteEditor.jsx** - Note creation and editing interface
-- **NoteDetails.jsx** - Detailed note view
-- **SharedNotes.jsx** - View notes shared with the user
-
-### Server Structure
-- **config/**
-  - `db.js` - MongoDB connection configuration using Mongoose
-  
-- **controllers/**
-  - `authController.js` - Handles user registration and login logic
-    - `register()` - Creates new user with hashed password
-    - `login()` - Validates credentials and returns JWT token
-    
-- **middleware/**
-  - `authMiddleware.js` - JWT token verification for protected routes
-  
-- **models/**
-  - `User.js` - User schema defining name, email, password fields
-  
-- **routes/**
-  - `authRoutes.js` - Authentication API routes
-    - `POST /register` - User registration endpoint
-    - `POST /login` - User login endpoint
-    
-- **utils/**
-  - `generateToken.js` - Helper function to generate JWT tokens with 7-day expiry
-  
-- **server.js** - Main Express application entry point
-  - Configures middleware (CORS, JSON parsing)
-  - Connects to MongoDB
-  - Mounts API routes
-  - Starts the server
-
-## Backend Implementation Details
-
-### Database Schema
-
-**User Model** (`models/User.js`)
-```javascript
-{
-  name: String (required, trimmed)
-  email: String (required, unique, lowercase, trimmed)
-  password: String (required, hashed with bcrypt)
-  timestamps: true (createdAt, updatedAt)
-}
-```
-
-### Authentication Flow
-
-1. **Registration** (`authController.register`)
-   - Validates required fields (name, email, password)
-   - Checks if email already exists (409 if duplicate)
-   - Hashes password using bcrypt with salt rounds
-   - Creates new user in database
-   - Generates JWT token with 7-day expiry
-   - Returns token and user data (excluding password)
-
-2. **Login** (`authController.login`)
-   - Validates email and password presence
-   - Finds user by email (case-insensitive)
-   - Compares provided password with hashed password
-   - Generates JWT token on successful authentication
-   - Returns token and user data
-
-3. **Token Generation** (`utils/generateToken.js`)
-   - Signs JWT with user ID as payload
-   - Uses JWT_SECRET from environment variables
-   - Sets 7-day expiration
-   - Returns signed token
-
-4. **Authentication Middleware** (`middleware/authMiddleware.js`)
-   - Verifies JWT token from Authorization header
-   - Decodes token and attaches user to request
-   - Protects routes requiring authentication
-
-### Security Features
-- ✅ Password hashing with bcrypt (10 salt rounds)
-- ✅ JWT token-based authentication
-- ✅ Email uniqueness validation
-- ✅ Case-insensitive email handling
-- ✅ Environment variable protection
-- ✅ CORS enabled for cross-origin requests
-- ✅ Input validation and error handling
-
-### Environment Variables Required
-```env
-PORT=5000                          # Server port
-MONGO_URI=mongodb://...            # MongoDB connection string
-JWT_SECRET=your_secret_key         # JWT signing secret (use strong random string)
-NODE_ENV=development               # Environment mode
-```
+### Notes
+- `GET /api/notes` - Get all accessible notes (owned + collaborated)
+- `GET /api/notes/search?q=&category=` - Search notes
+- `GET /api/notes/stats` - Notes statistics by category
+- `GET /api/notes/:id` - Get single note
+- `POST /api/notes` - Create note (supports PDF for `Documents` category)
+- `PUT /api/notes/:id` - Update note (owner update flow)
+- `DELETE /api/notes/:id` - Delete note
+- `POST /api/notes/:id/collaborators` - Add collaborator by email
+- `DELETE /api/notes/:id/collaborators/:userId` - Remove collaborator
 
 ## Scripts
 
+### Client (`client/package.json`)
+
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
+
+### Server (`server/package.json`)
+
+```bash
+npm run dev
+npm start
+npm run seed
+```
+
 ### Client
+
 ```bash
 npm run dev        # Start development server
 npm run build      # Build for production
@@ -304,32 +200,26 @@ npm run lint       # Run ESLint
 ```
 
 ### Server
+
 ```bash
 npm start          # Start server with node
 npm run dev        # Start server with nodemon (auto-restart)
 ```
 
-## Backend Dependencies
+## Security
 
-### Production Dependencies
-- **express** - Fast, minimalist web framework for Node.js
-- **mongoose** - MongoDB object modeling tool
-- **jsonwebtoken** - JWT token generation and verification
-- **bcryptjs** - Password hashing library
-- **cors** - Enable Cross-Origin Resource Sharing
-- **dotenv** - Load environment variables from .env file
+- Password hashing with bcryptjs
+- JWT authentication middleware for protected routes
+- Environment variables for secrets
+- Basic rich-text sanitization before persistence
 
-### Development Dependencies
-- **nodemon** - Auto-restart server on file changes during development
+## Roadmap
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Real-time collaborative editing
+- Notifications for shared note activity
+- Tagging and advanced filters
+- Better media support in rich text
 
 ## License
 
-This project is licensed under the MIT License.
+MIT
