@@ -1,245 +1,235 @@
 # CollabNote
 
-CollabNote is a collaborative note-taking web application built with the MERN stack.
+```
+CollabNote is a collaborative note-taking and document management web application built with the MERN stack and deployed using a DevOps-focused workflow with Docker and Kubernetes.
 
-It allows users to register, log in, create and manage notes, collaborate with other users, search and filter notes, and manage document notes with PDF upload support.
+The project includes a React/Vite frontend, Node.js/Express backend, MongoDB Atlas database, Docker containerization, and local Kubernetes deployment using Minikube and NGINX Ingress.
+```
 
-## Project Goal
 
-This project was built to demonstrate full-stack MERN development skills for a technical assessment, including authentication, CRUD operations, file upload handling, rich text editing, collaborator management, and responsive UI design.
+## Project Overview
+
+```
+CollabNote allows users to securely create, manage, search, organize, and share notes in one centralized platform. It also supports PDF document uploads and collaborator-based shared notes.
+
+This project was extended beyond full-stack development to demonstrate practical DevOps skills including containerization, Kubernetes deployments, service networking, ingress routing, secrets management, and troubleshooting.
+```
 
 ## Tech Stack
 
-### Frontend
-- React
-- Vite
+### Application
+```
+- React.js + Vite
 - Tailwind CSS
-- React Router
-- Axios
-
-### Backend
 - Node.js
 - Express.js
-- MongoDB
+- MongoDB Atlas
 - Mongoose
-- JWT
-- bcryptjs
-- Multer (PDF upload handling)
+- JWT Authentication
+- Multer for PDF uploads
+```
 
-## Current Features
+### DevOps
+```
+- Docker
+- Kubernetes
+- Minikube
+- NGINX Ingress
+- Kubernetes Deployments
+- Kubernetes Services
+- Kubernetes Secrets
+- kubectl
+- Linux
+```
 
+## Features
+```
 - User registration and login
-- JWT-based protected routes
-- Create, edit, and delete notes
-- Rich text note editor with formatting toolbar
-- Document notes with PDF upload and view support
+- JWT-based authentication
+- Create, edit, delete, search, and filter notes
+- Rich text note editor
+- PDF upload support
 - Shared notes and collaborator management
-- Search notes by text and category
-- Notes statistics endpoint for dashboard and category insights
-- Responsive dashboard with modern sidebar-based navigation
+- Dashboard statistics
+- Dockerized frontend and backend
+- Local Kubernetes deployment with Minikube
+- NGINX Ingress routing for frontend and backend API traffic
+```
 
-## Key Implementation Highlights
 
-- Built protected authentication flow using JWT
-- Implemented note CRUD operations with search and category filtering
-- Added PDF upload support for document notes using Multer
-- Created a rich text editor toolbar for formatted note content
-- Added collaborator management for shared notes
-- Designed a responsive dashboard with note statistics and category insights
+## DevOps Architecture
+
+```
+Browser
+   ↓
+collabnote.local
+   ↓
+NGINX Ingress
+   ├── /     → Frontend Service → React Frontend Pod
+   └── /api  → Backend Service  → Node.js Backend Pod
+                                  ↓
+                             MongoDB Atlas
+```
+
+
 
 ## Project Structure
 
-```text
+```
 CollabNote/
 ├── client/
 │   ├── public/
 │   ├── src/
-│   │   ├── assets/
-│   │   │   ├── icons/
-│   │   │   └── images/
-│   │   ├── components/
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── NoteCard.jsx
-│   │   │   └── NoteCollaboratorsPanel.jsx
-│   │   ├── context/
-│   │   │   ├── AuthContext.jsx
-│   │   │   └── useAuth.js
-│   │   ├── pages/
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── Login.jsx
-│   │   │   ├── NoteDetails.jsx
-│   │   │   ├── NoteEditor.jsx
-│   │   │   ├── NotFound.jsx
-│   │   │   ├── Register.jsx
-│   │   │   └── SharedNotes.jsx
-│   │   ├── services/
-│   │   │   └── api.js
-│   │   ├── styles/
-│   │   │   └── index.css
-│   │   ├── utils/
-│   │   │   ├── categories.js
-│   │   │   └── richText.js
-│   │   ├── App.jsx
-│   │   ├── index.css
-│   │   └── main.jsx
-│   ├── index.html
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── .env.production
 │   ├── package.json
 │   └── vite.config.js
-└── server/
-    ├── config/
-    │   └── db.js
-    ├── controllers/
-    │   ├── authController.js
-    │   └── noteController.js
-    ├── middleware/
-    │   ├── authMiddleware.js
-    │   └── uploadMiddleware.js
-    ├── models/
-    │   ├── Note.js
-    │   └── User.js
-    ├── routes/
-    │   ├── authRoutes.js
-    │   └── noteRoutes.js
-    ├── scripts/
-    │   └── seed.js
-    ├── utils/
-    │   └── generateToken.js
-    ├── package.json
-    └── server.js
+│
+├── server/
+│   ├── config/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── scripts/
+│   ├── utils/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── server.js
+│
+└── k8s/
+    ├── namespace.yaml
+    ├── backend-secret.yaml
+    ├── backend-deployment.yaml
+    ├── backend-service.yaml
+    ├── frontend-deployment.yaml
+    ├── frontend-service.yaml
+    └── ingress.yaml
 
-## Prerequisites
+```
 
-Before running this project, make sure you have the following installed:
 
-- Node.js 18 or higher
-- npm
-- MongoDB (local installation or MongoDB Atlas)
+## Local Development
 
-## Installation and Run
+Run the backend:
+```
+cd server
+npm install
+npm run dev
+```
 
-### 1. Clone the Repository
+Create .env file in backend
+```
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:5173
+```
 
-```bash
-git clone <repository-url>
-cd CollabNote
+Run in frontend:
+```
+cd client
+npm install
+npm run dev
+```
 
-### 2. Backend Setup
 
-    cd server
-    npm install
+............................................................................
 
-Create a .env file inside the server folder:
 
-    PORT=5000
-    MONGO_URI=your_mongodb_connection_string
-    JWT_SECRET=your_jwt_secret
+## Kubernetes Deployment with Minikube
+Minikube was used to deploy the application locally on Kubernetes.
+```
+minikube start
+minikube addons enable ingress
+eval $(minikube docker-env)
+```
 
-Run the backend server:
+Rebuild images inside the Minikube Docker environment:
+```
+docker build -t collabnote-frontend:v1 ./client
+docker build -t collabnote-backend:v1 ./server
+```
 
-    npm run dev
+For Kubernetes, the frontend production API URL was updated to:
+```
+VITE_API_URL=/api
+```
 
-The backend will run at:
 
-    http://localhost:5000
+Backend environment variables were managed using a Kubernetes Secret:
+```
+stringData:
+  PORT: "5000"
+  MONGO_URI: "your_mongodb_atlas_connection_string"
+  JWT_SECRET: "your_jwt_secret"
+  CLIENT_URL: "http://collabnote.local"
+  NODE_ENV: "production"
+```
 
-### 3. Frontend Setup
+Apply Kubernetes manifests:
+```
+kubectl apply -f k8s/
+```
 
-    cd ../client
-    npm install
+Check deployment status:
+```
+kubectl get all -n collabnote
+kubectl get ingress -n collabnote
+kubectl logs deployment/backend -n collabnote
+```
 
-Create a .env file inside the client folder (optional but recommended):
+Local Domain Setup.The local domain was configured by mapping the Minikube IP to collabnote.local.
+```
+minikube ip
+sudo nano /etc/hosts
+```
 
-    VITE_API_URL=http://localhost:5000/api
+Example:
+```
+192.168.49.2 collabnote.local
+```
 
-Run the frontend server:
+Access the app:
+```
+http://collabnote.local
+````
 
-    npm run dev
 
-The frontend will run at:
+### Troubleshooting Experience
+```
+During deployment, I resolved real Kubernetes issues including:
 
-    http://localhost:5173
+ImagePullBackOff
+ErrImagePull
+Minikube local image visibility issues
+Local DNS resolution issues
+NGINX Ingress routing problems
+MongoDB Atlas backend connectivity
+Pod log debugging and rollout restarts
+```
 
-### API Endpoints
-
-###Authentication
-
-    POST /api/auth/register - Register a new user
-    
-    POST /api/auth/login - Log in a user
-
-###Notes
-
-    GET /api/notes - Get all accessible notes (owned and collaborated)
-    
-    GET /api/notes/search?q=&category= - Search notes by text or category
-    
-    GET /api/notes/stats - Get note statistics by category
-    
-    GET /api/notes/:id - Get a single note
-    
-    POST /api/notes - Create a note
-    
-    PUT /api/notes/:id - Update a note
-    
-    DELETE /api/notes/:id - Delete a note
-    
-    POST /api/notes/:id/collaborators - Add a collaborator by email
-    
-    DELETE /api/notes/:id/collaborators/:userId - Remove a collaborator
-
-### Scripts
-Client (client/package.json)
-    npm run dev
-
-Server (server/package.json)
-    npm start
-
-### Features
-
-    User registration and login
-    
-    Create, edit, and delete notes
-    
-    Search notes by keyword or category
-    
-    Upload PDF files for document notes
-    
-    Share notes with collaborators
-    
-    Dashboard statistics for notes
-
-### How to Test
-
-    Register a new user account
-    
-    Log in with valid credentials
-    
-    Create a normal text note
-    
-    Create a document note with PDF upload
-    
-    Edit and delete notes
-    
-    Search notes by keyword or category
-    
-    Add collaborators to a shared note
-    
-    Verify dashboard statistics update correctly
+Useful commands:
+```
+kubectl get pods -n collabnote
+kubectl describe pod <pod-name> -n collabnote
+kubectl logs deployment/backend -n collabnote
+kubectl get events -n collabnote --sort-by=.metadata.creationTimestamp
+kubectl rollout restart deployment/frontend -n collabnote
+kubectl rollout restart deployment/backend -n collabnote
+```
 
 ### Future Improvements
-
-    Real-time collaboration with WebSockets
-    
-    Note comments and activity history
-    
-    Better permission control for collaborators
-    
-    Notification system
-    
-    Profile settings and avatars
-    
-    Dark mode support
+```
+Deploy to Azure Kubernetes Service
+Push Docker images to Azure Container Registry
+Add GitHub Actions CI/CD for Kubernetes deployment
+Add HTTPS with cert-manager
+Add monitoring with Prometheus and Grafana
+Add centralized logging
+Add real-time collaboration with WebSockets
+```
 
 ### Author
-
-    Ayesha Lakshan
+Ayesha Lakshan
