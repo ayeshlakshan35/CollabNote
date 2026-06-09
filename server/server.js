@@ -34,6 +34,20 @@ app.get("/", (req, res) => {
   res.json({ message: "CollabNote API is running" });
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "collabnote-backend"
+  });
+});
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "collabnote-backend"
+  });
+});
+
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", noteRoutes);
